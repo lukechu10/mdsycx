@@ -126,6 +126,7 @@ dependencies = [
 name = "mdsycx"
 version = "0.1.0"
 dependencies = [
+ "mdsycx-macro",
  "pulldown-cmark",
  "quick-xml",
  "serde",
@@ -133,6 +134,14 @@ dependencies = [
  "serde_yaml",
  "sycamore",
  "thiserror",
+]
+
+[[package]]
+name = "mdsycx-macro"
+version = "0.1.0"
+dependencies = [
+ "proc-macro2",
+ "syn",
 ]
 
 [[package]]
