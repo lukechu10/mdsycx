@@ -1,5 +1,6 @@
 html {
     overflow-x: hidden;
+    scroll-behavior: smooth;
 }
 
 main {
@@ -55,6 +56,9 @@ main {
 
         & button {
             display: inline-block;
+
+            font-size: larger;
+            font-weight: lighter;
 
             background-color: #d3912d;
             border-radius: 4px;

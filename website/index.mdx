@@ -1,5 +1,5 @@
 <div class="links-section">
-  <a href="#installation">usage</a>
+  <a href="#about">usage</a>
   <a href="https://github.com/lukechu10/mdsycx">github</a>
   <a href="https://docs.rs/mdsycx">docs.rs</a>
   <a href="https://crates.io/crates/mdsycx">crates.io</a>
@@ -7,14 +7,14 @@
 
 # mdsycx
 
-## Sycamore in markdown
+## markdown with Sycamore
 
 <Counter initial="42" />
 
 ```md
 # mdsycx
 
-## Sycamore in markdown
+## markdown with Sycamore
 
 <Counter initial="42" />
 ```
@@ -23,7 +23,14 @@
 
 ---
 
-## Installation {#installation}
+## About {#about}
+
+Plain ol' markdown is a bit boring... What if we could use
+[Sycamore](https://sycamore-rs.netlify.app) directly in our markdown?
+
+Meet **mdsycx**!
+
+## Installation
 
 Just run the following command and you are all set to go.
 
@@ -125,6 +132,28 @@ markdown.
 ## Pre-parsing your markdown
 
 TODO: This part hasn't been written yet.
+
+## Front matter
+
+Your markdown file can contain a special section called the front matter. This is a place where you
+can specify _metadata_ about your markdown file (such as the time it was written, or the author,
+etc...). The front matter should be surrounded by "`---`" characters at the top of your file and the
+data should be in YAML format.
+
+You might have noticed that the `mdsycx::parse` function is actually generic. The generic parameter
+is the type of the front matter of the document. To access the data in the front-matter, you can use
+the `.front_matter` field on the struct returned from `mdsycx::parse`.
+
+```md
+---
+title: Writing markdown with mdsycx
+author: Me
+---
+
+# Writing markdown with mdsycx
+
+Yada yada...
+```
 
 ## Roadmap
 
