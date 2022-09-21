@@ -2,34 +2,49 @@ use mdsycx::{parse, ComponentMap, FromMd, MDSycX};
 use sycamore::prelude::*;
 
 static MARKDOWN: &str = r#"
-# Markdown in Sycamore
+# mdsycx
+## Sycamore in markdown
 
-This is text is rendered with MDSycX.
+<Counter initial=42 />
 
-```rust
-fn main() {
-    // A rust codeblock.
-}
+```md
+# mdsycx
+## Sycamore in markdown
+
+<Counter initial=42 />
 ```
-
-> A block quote
-> ### With a heading inside.
-
-<https://google.com>
-Test
 "#;
 
 #[derive(Prop, FromMd)]
-struct LinkProps<'a, G: GenericNode> {
-    href: String,
+struct CounterProps<'a, G: Html> {
+    initial: i32,
     children: Children<'a, G>,
 }
 
 #[component]
-fn Link<'a, G: Html>(cx: Scope<'a>, props: LinkProps<'a, G>) -> View<G> {
+fn Counter<'a, G: Html>(cx: Scope<'a>, props: CounterProps<'a, G>) -> View<G> {
+    let mut counter = create_signal(cx, props.initial);
+    let increment = move |_| counter += 1;
+    let decrement = move |_| counter -= 1;
+    view! { cx,
+        div(class="counter") {
+            button(type="button", on:click=decrement) { "-" }
+            span { (counter.get()) }
+            button(type="button", on:click=increment) { "+" }
+        }
+    }
+}
+
+#[derive(Prop, FromMd)]
+struct CodeBlockProps<'a, G: Html> {
+    children: Children<'a, G>,
+}
+
+#[component]
+fn CodeBlock<'a, G: Html>(cx: Scope<'a>, props: CodeBlockProps<'a, G>) -> View<G> {
     let children = props.children.call(cx);
     view! { cx,
-        a(class="custom-link", href=props.href) {
+        pre(class="codeblock") {
             (children)
         }
     }
@@ -38,16 +53,22 @@ fn Link<'a, G: Html>(cx: Scope<'a>, props: LinkProps<'a, G>) -> View<G> {
 #[component]
 fn App<G: Html>(cx: Scope) -> View<G> {
     let parsed = parse::<()>(MARKDOWN).expect("could not parse markdown");
+    log::debug!("Parsed events {:#?}", parsed.body.events);
+
+    let components = ComponentMap::new()
+        .with("Counter", Counter)
+        .with("pre", CodeBlock);
 
     view! { cx,
-        h1 { "MDSycX" }
-
-        MDSycX(body=parsed.body, components=ComponentMap::new().with("a", Link))
+        main {
+            MDSycX(body=parsed.body, components=components)
+        }
     }
 }
 
 fn main() {
     console_error_panic_hook::set_once();
+    wasm_logger::init(wasm_logger::Config::default());
 
     sycamore::render(App);
 }

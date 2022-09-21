@@ -3,6 +3,8 @@
 use std::borrow::Cow;
 
 use pulldown_cmark::{CodeBlockKind, Event as MdEvent, Tag};
+use quick_xml::events::Event as XmlEvent;
+use quick_xml::reader::Reader;
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
@@ -85,7 +87,7 @@ fn parse_md(input: &str) -> BodyRes {
                 events.push(Event::Text(text.into()));
                 events.push(Event::End);
             }
-            MdEvent::Html(_) => todo!("inline html"),
+            MdEvent::Html(html) => parse_html(&html, &mut events),
             MdEvent::FootnoteReference(_) => todo!("footnote reference"),
             MdEvent::SoftBreak => {} // Do nothing.
             MdEvent::HardBreak => {
@@ -182,5 +184,47 @@ fn end_tag<'a>(tag: Tag<'a>, events: &mut Vec<Event<'a>>) {
         Tag::Strikethrough => events.push(Event::End),
         Tag::Link(_, _, _) => events.push(Event::End),
         Tag::Image(_, _, _) => unreachable!("handled in start_tag"),
+    }
+}
+
+fn parse_html<'a>(input: &str, events: &mut Vec<Event<'a>>) {
+    let mut reader = Reader::from_str(input);
+    reader.trim_text(true);
+
+    let mut buf = Vec::new();
+    loop {
+        match reader.read_event_into(&mut buf) {
+            Ok(XmlEvent::Start(start)) => {
+                events.push(Event::Start(
+                    String::from_utf8(start.name().0.to_vec()).unwrap().into(),
+                ));
+                for attr in start.html_attributes().with_checks(false).flatten() {
+                    events.push(Event::Attr(
+                        String::from_utf8(attr.key.0.to_vec()).unwrap().into(),
+                        String::from_utf8(attr.value.to_vec()).unwrap().into(),
+                    ));
+                }
+            }
+            Ok(XmlEvent::End(_)) => events.push(Event::End),
+            Ok(XmlEvent::Empty(start)) => {
+                events.push(Event::Start(
+                    String::from_utf8(start.name().0.to_vec()).unwrap().into(),
+                ));
+                for attr in start.html_attributes().with_checks(false).flatten() {
+                    events.push(Event::Attr(
+                        String::from_utf8(attr.key.0.to_vec()).unwrap().into(),
+                        String::from_utf8(attr.value.to_vec()).unwrap().into(),
+                    ));
+                }
+                events.push(Event::End);
+            }
+            Ok(XmlEvent::Text(text)) => {
+                events.push(Event::Text(text.unescape().unwrap().to_string().into()))
+            }
+            Ok(XmlEvent::Eof) => return,
+            _ => {}
+        }
+
+        buf.clear();
     }
 }

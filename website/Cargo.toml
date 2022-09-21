@@ -5,5 +5,7 @@ edition = "2021"
 
 [dependencies]
 console_error_panic_hook = "0.1.7"
+log = "0.4.17"
 mdsycx = { path = "../mdsycx" }
 sycamore = "0.8.1"
+wasm-logger = "0.2.0"
