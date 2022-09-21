@@ -130,7 +130,6 @@ dependencies = [
  "pulldown-cmark",
  "quick-xml",
  "serde",
- "serde_json",
  "serde_yaml",
  "sycamore",
  "thiserror",
@@ -140,7 +139,9 @@ dependencies = [
 name = "mdsycx-macro"
 version = "0.1.0"
 dependencies = [
+ "proc-macro-error",
  "proc-macro2",
+ "quote",
  "syn",
 ]
 
@@ -161,6 +162,30 @@ name = "paste"
 version = "1.0.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b1de2e551fb905ac83f73f7aedf2f0cb4a0da7e35efa24a202a936269f1f18e1"
+
+[[package]]
+name = "proc-macro-error"
+version = "1.0.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "da25490ff9892aab3fcf7c36f08cfb902dd3e71ca0f9f9517bea02a73a5ce38c"
+dependencies = [
+ "proc-macro-error-attr",
+ "proc-macro2",
+ "quote",
+ "syn",
+ "version_check",
+]
+
+[[package]]
+name = "proc-macro-error-attr"
+version = "1.0.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a1be40180e52ecc98ad80b184934baf3d0d29f979574e439af5a55274b35f869"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "version_check",
+]
 
 [[package]]
 name = "proc-macro2"
@@ -229,17 +254,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "serde_json"
-version = "1.0.85"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e55a28e3aaef9d5ce0506d0a14dbba8054ddc7e499ef522dd8b26859ec9d4a44"
-dependencies = [
- "itoa",
- "ryu",
- "serde",
-]
-
-[[package]]
 name = "serde_yaml"
 version = "0.9.13"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -270,8 +284,7 @@ checksum = "2fd0db749597d91ff862fd1d55ea87f7855a744a8425a64695b6fca237d1dad1"
 [[package]]
 name = "sycamore"
 version = "0.8.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "46a7d42f5f04604dfee0076676ec1763d26eeb7c6704139913bee6651fe0cbe1"
+source = "git+https://github.com/sycamore-rs/sycamore?rev=2210e94#2210e94a66edaa5bf4305ef7bd06c0ca694fdff0"
 dependencies = [
  "ahash",
  "indexmap",
@@ -288,8 +301,7 @@ dependencies = [
 [[package]]
 name = "sycamore-core"
 version = "0.8.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "62c65f176ac1e7e83f9b9848a5c8b33f19d90fd20cba03e6b118bcdf2857145f"
+source = "git+https://github.com/sycamore-rs/sycamore?rev=2210e94#2210e94a66edaa5bf4305ef7bd06c0ca694fdff0"
 dependencies = [
  "ahash",
  "sycamore-reactive",
@@ -298,8 +310,7 @@ dependencies = [
 [[package]]
 name = "sycamore-macro"
 version = "0.8.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "648b65d7362cb4c0ea969f2c387dcd88d26c3b73b852fa01b167bb36ab336b56"
+source = "git+https://github.com/sycamore-rs/sycamore?rev=2210e94#2210e94a66edaa5bf4305ef7bd06c0ca694fdff0"
 dependencies = [
  "once_cell",
  "proc-macro2",
@@ -310,8 +321,7 @@ dependencies = [
 [[package]]
 name = "sycamore-reactive"
 version = "0.8.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6376b578ad32f5f3ab6943bccec906fb0e1f0258a8bedf811afdec8c3330ef80"
+source = "git+https://github.com/sycamore-rs/sycamore?rev=2210e94#2210e94a66edaa5bf4305ef7bd06c0ca694fdff0"
 dependencies = [
  "ahash",
  "bumpalo",
@@ -323,8 +333,7 @@ dependencies = [
 [[package]]
 name = "sycamore-web"
 version = "0.8.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3c29a5344ccd47e9b7d18acb810f7d9200bbf0bed90543be58ffe6e1eee132b5"
+source = "git+https://github.com/sycamore-rs/sycamore?rev=2210e94#2210e94a66edaa5bf4305ef7bd06c0ca694fdff0"
 dependencies = [
  "html-escape",
  "indexmap",
@@ -482,6 +491,5 @@ version = "0.1.0"
 dependencies = [
  "console_error_panic_hook",
  "mdsycx",
- "serde",
  "sycamore",
 ]

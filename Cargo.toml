@@ -1,2 +1,5 @@
 [workspace]
 members = ["mdsycx", "mdsycx-macro", "website"]
+
+[patch.crates-io]
+sycamore = { git = "https://github.com/sycamore-rs/sycamore", rev = "2210e94" }

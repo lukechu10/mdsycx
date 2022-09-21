@@ -1,5 +1,4 @@
-use mdsycx::{parse, ComponentMap, MDSycX};
-use serde::Deserialize;
+use mdsycx::{parse, ComponentMap, FromMd, MDSycX};
 use sycamore::prelude::*;
 
 static MARKDOWN: &str = r#"
@@ -17,23 +16,22 @@ fn main() {
 > ### With a heading inside.
 
 <https://google.com>
+Test
 "#;
 
-#[derive(Prop, Deserialize)]
-struct LinkProps {
+#[derive(Prop, FromMd)]
+struct LinkProps<'a, G: GenericNode> {
     href: String,
+    children: Children<'a, G>,
 }
 
 #[component]
-fn Link<G: Html>(cx: Scope, props: LinkProps) -> View<G> {
-    let mut counter = create_signal(cx, 0);
-    let increment = move |_| counter += 1;
-
+fn Link<'a, G: Html>(cx: Scope<'a>, props: LinkProps<'a, G>) -> View<G> {
+    let children = props.children.call(cx);
     view! { cx,
-        "Custom link to: " (props.href)
-        br {}
-        "Counter value: " (counter.get())
-        button(on:click=increment) { "+1" }
+        a(class="custom-link", href=props.href) {
+            (children)
+        }
     }
 }
 

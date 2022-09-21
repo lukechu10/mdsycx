@@ -1,35 +1,43 @@
 //! Sycamore bindings for rendering MD with components.
 
 use std::collections::HashMap;
+use std::rc::Rc;
 
-use serde::Deserialize;
-use serde_json::{Map, Value};
 use sycamore::prelude::*;
 use sycamore::utils::render::insert;
 
-use crate::{BodyRes, Event};
+use crate::{BodyRes, Event, FromMd};
 
-type TypeErasedComponent<G> = Box<dyn Fn(Scope, Value) -> View<G>>;
+type MdComponentProps<'a, G> = (Vec<(&'a str, &'a str)>, View<G>);
 
-/// Convert a Sycamore component into a type-erased component. The props need to be deserializable
-/// (with serde).
-fn into_type_erased_component<G: Html, F, Props>(f: F) -> impl Fn(Scope, Value) -> View<G>
+/// A type-erased component that can be used from Markdown.
+type MdComponent<'a, G> = Rc<dyn Fn(Scope<'a>, MdComponentProps<G>) -> View<G> + 'a>;
+
+/// Convert a Sycamore component into a type-erased component. The props need to implement
+/// [`FromMd`].
+fn into_type_erased_component<'a, G: Html, F, Props>(
+    f: F,
+) -> impl Fn(Scope<'a>, MdComponentProps<G>) -> View<G>
 where
-    F: Fn(Scope, Props) -> View<G>,
-    Props: for<'de> Deserialize<'de>,
+    F: Fn(Scope<'a>, Props) -> View<G>,
+    Props: FromMd<G>,
 {
-    move |cx, serialized| {
-        let deserialized = serde_json::from_value(serialized).expect("could not deserialize prop");
-        f(cx, deserialized)
+    move |cx, (props_serialized, children)| {
+        let mut props = Props::new_prop_default();
+        for (name, value) in props_serialized {
+            props.set_prop(name, value);
+        }
+        props.set_children(children);
+        f(cx, props)
     }
 }
 
 /// A map from component names to component functions.
-pub struct ComponentMap<G: Html> {
-    map: HashMap<String, TypeErasedComponent<G>>,
+pub struct ComponentMap<'a, G: Html> {
+    map: HashMap<String, MdComponent<'a, G>>,
 }
 
-impl<G: Html> ComponentMap<G> {
+impl<'a, G: Html> ComponentMap<'a, G> {
     pub fn new() -> Self {
         Self {
             map: Default::default(),
@@ -38,16 +46,16 @@ impl<G: Html> ComponentMap<G> {
 
     pub fn with<F, Props>(mut self, name: &'static str, f: F) -> Self
     where
-        F: Fn(Scope, Props) -> View<G> + 'static,
-        Props: for<'de> Deserialize<'de> + 'static,
+        F: Fn(Scope<'a>, Props) -> View<G> + 'static,
+        Props: FromMd<G> + 'a,
     {
         self.map
-            .insert(name.to_string(), Box::new(into_type_erased_component(f)));
+            .insert(name.to_string(), Rc::new(into_type_erased_component(f)));
         self
     }
 }
 
-impl<G: Html> Default for ComponentMap<G> {
+impl<'a, G: Html> Default for ComponentMap<'a, G> {
     fn default() -> Self {
         Self::new()
     }
@@ -56,23 +64,24 @@ impl<G: Html> Default for ComponentMap<G> {
 #[derive(Prop)]
 pub struct MdSycXProps<'a, G: Html> {
     body: BodyRes<'a>,
-    components: ComponentMap<G>,
+    components: ComponentMap<'a, G>,
 }
 
 #[component]
 pub fn MDSycX<'a, G: Html>(cx: Scope<'a>, props: MdSycXProps<'a, G>) -> View<G> {
-    events_to_view(cx, &props.body.events, props.components)
+    let events = create_ref(cx, props.body.events);
+    events_to_view(cx, events, props.components)
 }
 
 enum TagType<'a, G: Html> {
     Element(&'a str),
-    Component(&'a TypeErasedComponent<G>),
+    Component(MdComponent<'a, G>),
 }
 
 fn events_to_view<'a, G: Html>(
     cx: Scope<'a>,
-    events: &[Event<'a>],
-    components: ComponentMap<G>,
+    events: &'a [Event<'a>],
+    components: ComponentMap<'a, G>,
 ) -> View<G> {
     // A stack of fragments. The bottom fragment is the view that is returned. Subsequent fragments
     // are those in nested elements.
@@ -87,7 +96,7 @@ fn events_to_view<'a, G: Html>(
                 fragments_stack.push(Vec::new());
                 attr_stack.push(Vec::new());
                 // Check if a component is registered for the tag.
-                if let Some(component) = components.map.get(&tag.to_string()) {
+                if let Some(component) = components.map.get(&tag.to_string()).cloned() {
                     // Render the component instead of the element.
                     tag_stack.push(TagType::Component(component))
                 } else {
@@ -115,17 +124,8 @@ fn events_to_view<'a, G: Html>(
                     TagType::Component(component) => {
                         // Collect attributes into serde_json::Value.
                         let attributes = attr_stack.pop().expect("events are not balanced");
-                        let props = Value::Object(Map::from_iter(attributes.into_iter().map(
-                            |(name, value)| {
-                                // let value = serde_json::from_str(value)
-                                //     .expect("could not deserialize value");
-                                let value = Value::String(value.to_string());
-                                (name.to_string(), value)
-                            },
-                        )));
-                        // TODO: fragments are currently ignored.
-                        let _children = fragments_stack.pop().expect("events are not balanced");
-                        let node = component(cx, props);
+                        let children = fragments_stack.pop().expect("events are not balanced");
+                        let node = component(cx, (attributes, View::new_fragment(children)));
                         fragments_stack
                             .last_mut()
                             .expect("should always have at least one fragment on stack")
