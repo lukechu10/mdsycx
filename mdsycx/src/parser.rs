@@ -1,8 +1,9 @@
 //! Parse MD with custom extensions.
 
 use std::borrow::Cow;
+use std::collections::HashMap;
 
-use pulldown_cmark::{CodeBlockKind, Event as MdEvent, Tag};
+use pulldown_cmark::{CodeBlockKind, CowStr, Event as MdEvent, Tag};
 use quick_xml::events::Event as XmlEvent;
 use quick_xml::reader::Reader;
 use serde::{Deserialize, Serialize};
@@ -75,11 +76,14 @@ where
 fn parse_md(input: &str) -> BodyRes {
     let md_parser = pulldown_cmark::Parser::new(input);
     let md_events = md_parser.collect::<Vec<_>>();
+
     let mut events = Vec::new();
+
+    let mut numbers = HashMap::new();
 
     for e in md_events {
         match e {
-            MdEvent::Start(tag) => start_tag(tag, &mut events),
+            MdEvent::Start(tag) => start_tag(tag, &mut events, &mut numbers),
             MdEvent::End(tag) => end_tag(tag, &mut events),
             MdEvent::Text(text) => events.push(Event::Text(text.into())),
             MdEvent::Code(text) => {
@@ -88,7 +92,17 @@ fn parse_md(input: &str) -> BodyRes {
                 events.push(Event::End);
             }
             MdEvent::Html(html) => parse_html(&html, &mut events),
-            MdEvent::FootnoteReference(_) => todo!("footnote reference"),
+            MdEvent::FootnoteReference(name) => {
+                let len = numbers.len() + 1;
+                events.push(Event::Start("sup".into()));
+                events.push(Event::Attr("class".into(), "footnote-reference".into()));
+                events.push(Event::Start("a".into()));
+                let href = numbers.entry(name).or_insert(len);
+                events.push(Event::Attr("href".into(), href.to_string().into()));
+                events.push(Event::Text(href.to_string().into()));
+                events.push(Event::End);
+                events.push(Event::End);
+            }
             MdEvent::SoftBreak => {} // Do nothing.
             MdEvent::HardBreak => {
                 events.push(Event::Start("br".into()));
@@ -98,14 +112,26 @@ fn parse_md(input: &str) -> BodyRes {
                 events.push(Event::Start("hr".into()));
                 events.push(Event::End);
             }
-            MdEvent::TaskListMarker(_) => todo!("task list marker"),
+            MdEvent::TaskListMarker(checked) => {
+                events.push(Event::Start("input".into()));
+                events.push(Event::Attr("disabled".into(), "".into()));
+                events.push(Event::Attr("type".into(), "checkbox".into()));
+                if checked {
+                    events.push(Event::Attr("checked".into(), "".into()));
+                }
+                events.push(Event::End);
+            }
         }
     }
 
     BodyRes { events }
 }
 
-fn start_tag<'a>(tag: Tag<'a>, events: &mut Vec<Event<'a>>) {
+fn start_tag<'a>(
+    tag: Tag<'a>,
+    events: &mut Vec<Event<'a>>,
+    numbers: &mut HashMap<CowStr<'a>, usize>,
+) {
     match tag {
         Tag::Paragraph => events.push(Event::Start("p".into())),
         Tag::Heading(lv, _, _) => events.push(Event::Start(lv.to_string().into())),
@@ -131,7 +157,23 @@ fn start_tag<'a>(tag: Tag<'a>, events: &mut Vec<Event<'a>>) {
             None => events.push(Event::Start("ul".into())),
         },
         Tag::Item => events.push(Event::Start("li".into())),
-        Tag::FootnoteDefinition(_) => todo!("footnote definition"),
+        Tag::FootnoteDefinition(name) => {
+            events.push(Event::Start("div".into()));
+            events.push(Event::Attr("class".into(), "footnote-definition".into()));
+            events.push(Event::Attr("id".into(), name.clone().into()));
+
+            events.push(Event::Start("sup".into()));
+            events.push(Event::Attr(
+                "class".into(),
+                "footnote-definition-label".into(),
+            ));
+
+            let len = numbers.len() + 1;
+            let number = numbers.entry(name).or_insert(len);
+            events.push(Event::Text(number.to_string().into()));
+
+            events.push(Event::End);
+        }
         Tag::Table(_) => events.push(Event::Start("table".into())),
         Tag::TableHead => {
             events.push(Event::Start("thead".into()));
@@ -171,7 +213,7 @@ fn end_tag<'a>(tag: Tag<'a>, events: &mut Vec<Event<'a>>) {
         }
         Tag::List(_) => events.push(Event::End),
         Tag::Item => events.push(Event::End),
-        Tag::FootnoteDefinition(_) => todo!("footnote definition"),
+        Tag::FootnoteDefinition(_) => events.push(Event::End),
         Tag::Table(_) => events.push(Event::End),
         Tag::TableHead => {
             events.push(Event::End);
