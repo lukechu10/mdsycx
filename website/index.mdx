@@ -1,0 +1,136 @@
+<div class="links-section">
+  <a href="#installation">usage</a>
+  <a href="https://github.com/lukechu10/mdsycx">github</a>
+  <a href="https://docs.rs/mdsycx">docs.rs</a>
+  <a href="https://crates.io/crates/mdsycx">crates.io</a>
+</div>
+
+# mdsycx
+
+## Sycamore in markdown
+
+<Counter initial="42" />
+
+```md
+# mdsycx
+
+## Sycamore in markdown
+
+<Counter initial="42" />
+```
+
+<br />
+
+---
+
+## Installation {#installation}
+
+Just run the following command and you are all set to go.
+
+```sh
+cargo add mdsycx
+```
+
+Alternatively, you can manually add this line to your `Cargo.toml` file.
+
+```toml
+mdsycx = "0.1"
+```
+
+## Usage
+
+Using mdsycx in your Sycamore app is as easy as pie! Use the `mdsycx::parse` function to parse your
+markdown file and use the `mdsycx::MDSycX` component to render it using Sycamore.
+
+```rust
+#[component]
+fn App<G: Html>(cx: Scope) -> View<G> {
+    let parsed = parse::<()>(markdown).unwrap();
+
+    view! { cx,
+        div(class="markdown-container") {
+            MDSycX(body=parsed.body)
+        }
+    }
+}
+```
+
+## Markdown syntax
+
+Use all your favorite features from markdown. mdsycx uses the excellent
+[`pulldown-cmark`](https://github.com/raphlinus/pulldown-cmark) crate as a
+[CommonMark](https://commonmark.org/) spec-compliant parser.
+
+## Using components in your markdown
+
+As advertised, it is possible to use Sycamore components directly in your markdown file.
+
+To do so, you need to make sure the props implement the `FromMd` trait. Luckily, this can be derived
+automatically using the derive macro.
+
+```rust
+#[derive(Prop, FromMd)]
+pub struct MyProps<'a, G: Html> {
+    /// A prop that can be set from markdown.
+    special_number: i32,
+    /// The `children` prop is required for all components.
+    children: Children<'a, G>,
+}
+```
+
+Next, create a component with props of this type. Nothing special is going on here, just your
+regular Sycamore component.
+
+```rust
+#[component]
+fn MyComponent<'a, G: Html>(cx: Scope<'a>, props: MyProps<'a, G>) -> View<G> {
+    let children = props.children.call(cx);
+    view! { cx,
+        div {
+            p { "Your special number is " (props.special_number) "!" }
+            p { "Everything else:" }
+            (children)
+        }
+    }
+}
+```
+
+Last step is to provide this component to the `MDSycX` component. To do so, you need to create a
+`ComponentMap`. Basically, this tells mdsycx which component to use when it sees a component in
+markdown.
+
+```rust
+let components = ComponentMap::new()
+    .with("MyComponent", MyComponent)
+    .with(/* as many components as you like */);
+
+view! { cx,
+    div(class="markdown-container") {
+        MDSycX(body=parsed.body, components=components)
+    }
+}
+```
+
+In fact, you can even replace built-in HTML elements such as `<a>` with your custom components! How
+cool is that?
+
+```rust
+let components = ComponentMap::new()
+    .with("a", SpecialLink);
+```
+
+Note that all props are optional and will be set to their default value if they are missing in
+markdown.
+
+## Pre-parsing your markdown
+
+TODO: This part hasn't been written yet.
+
+## Roadmap
+
+Many features are not yet imlpemented. Here are a few:
+
+- Built-in syntax highlighting. Right now, we are using [Prism](https://prismjs.com/).
+- Combining and composing markdown files.
+- Easily import your markdown files to Rust.
+- And more! If you feel like we left out something important, please feel free to send us a PR!

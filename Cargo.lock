@@ -133,6 +133,7 @@ dependencies = [
  "serde_yaml",
  "sycamore",
  "thiserror",
+ "web-sys",
 ]
 
 [[package]]
@@ -504,5 +505,6 @@ dependencies = [
  "log",
  "mdsycx",
  "sycamore",
+ "wasm-bindgen",
  "wasm-logger",
 ]

@@ -64,9 +64,11 @@ impl<'a, G: Html> Default for ComponentMap<'a, G> {
 #[derive(Prop)]
 pub struct MdSycXProps<'a, G: Html> {
     body: BodyRes<'a>,
+    #[builder(default)]
     components: ComponentMap<'a, G>,
 }
 
+/// Renders your Sycamore augmented markdown.
 #[component]
 pub fn MDSycX<'a, G: Html>(cx: Scope<'a>, props: MdSycXProps<'a, G>) -> View<G> {
     let events = create_ref(cx, props.body.events);
@@ -144,6 +146,10 @@ fn events_to_view<'a, G: Html>(
                 .expect("should always have at least one fragment on stack")
                 .push(View::new_node(G::text_node(text))),
         }
+    }
+
+    if fragments_stack.len() != 1 {
+        // TODO: emit warning
     }
 
     View::new_fragment(fragments_stack[0].clone())

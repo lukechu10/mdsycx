@@ -11,3 +11,4 @@ serde = { version = "1.0.144", features = ["derive"] }
 serde_yaml = "0.9.13"
 sycamore = "0.8.1"
 thiserror = "1.0.35"
+web-sys = "0.3.60"

@@ -3,7 +3,7 @@
 use std::borrow::Cow;
 use std::collections::HashMap;
 
-use pulldown_cmark::{CodeBlockKind, CowStr, Event as MdEvent, Tag};
+use pulldown_cmark::{CodeBlockKind, CowStr, Event as MdEvent, Options, Tag};
 use quick_xml::events::Event as XmlEvent;
 use quick_xml::reader::Reader;
 use serde::{Deserialize, Serialize};
@@ -74,14 +74,13 @@ where
 
 /// Parse Markdown into structured events.
 fn parse_md(input: &str) -> BodyRes {
-    let md_parser = pulldown_cmark::Parser::new(input);
-    let md_events = md_parser.collect::<Vec<_>>();
+    let mut md_parser = pulldown_cmark::Parser::new_ext(input, Options::all()).peekable();
 
     let mut events = Vec::new();
 
     let mut numbers = HashMap::new();
 
-    for e in md_events {
+    while let Some(e) = md_parser.next() {
         match e {
             MdEvent::Start(tag) => start_tag(tag, &mut events, &mut numbers),
             MdEvent::End(tag) => end_tag(tag, &mut events),
@@ -91,7 +90,17 @@ fn parse_md(input: &str) -> BodyRes {
                 events.push(Event::Text(text.into()));
                 events.push(Event::End);
             }
-            MdEvent::Html(html) => parse_html(&html, &mut events),
+            MdEvent::Html(html) => {
+                let mut html = html.to_string();
+                // If next events are also html events, collect them together.
+                while let Some(next_html) = md_parser.next_if(|e| matches!(e, MdEvent::Html(_))) {
+                    match next_html {
+                        MdEvent::Html(next_html) => html.push_str(&next_html),
+                        _ => unreachable!(),
+                    }
+                }
+                parse_html(&html, &mut events)
+            }
             MdEvent::FootnoteReference(name) => {
                 let len = numbers.len() + 1;
                 events.push(Event::Start("sup".into()));
@@ -103,7 +112,7 @@ fn parse_md(input: &str) -> BodyRes {
                 events.push(Event::End);
                 events.push(Event::End);
             }
-            MdEvent::SoftBreak => {} // Do nothing.
+            MdEvent::SoftBreak => events.push(Event::Text(" ".into())),
             MdEvent::HardBreak => {
                 events.push(Event::Start("br".into()));
                 events.push(Event::End);
@@ -134,7 +143,16 @@ fn start_tag<'a>(
 ) {
     match tag {
         Tag::Paragraph => events.push(Event::Start("p".into())),
-        Tag::Heading(lv, _, _) => events.push(Event::Start(lv.to_string().into())),
+        Tag::Heading(lv, id, class) => {
+            events.push(Event::Start(lv.to_string().into()));
+            if let Some(id) = id {
+                events.push(Event::Attr("id".into(), id.into()));
+            }
+            let class = class.join(" ");
+            if !class.is_empty() {
+                events.push(Event::Attr("class".into(), class.into()));
+            }
+        }
         Tag::BlockQuote => events.push(Event::Start("blockquote".into())),
         Tag::CodeBlock(cb) => {
             events.push(Event::Start("pre".into()));
@@ -264,6 +282,12 @@ fn parse_html<'a>(input: &str, events: &mut Vec<Event<'a>>) {
                 events.push(Event::Text(text.unescape().unwrap().to_string().into()))
             }
             Ok(XmlEvent::Eof) => return,
+            Err(e) => {
+                #[cfg(target_arch = "wasm32")]
+                web_sys::console::warn_1(&format!("html parsing error: {e}").into());
+                #[cfg(not(target_arch = "wasm32"))]
+                eprintln!("html parsing error: {e}");
+            }
             _ => {}
         }
 

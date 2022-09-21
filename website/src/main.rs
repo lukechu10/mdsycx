@@ -1,19 +1,14 @@
 use mdsycx::{parse, ComponentMap, FromMd, MDSycX};
 use sycamore::prelude::*;
+use wasm_bindgen::prelude::*;
 
-static MARKDOWN: &str = r#"
-# mdsycx
-## Sycamore in markdown
+static MARKDOWN: &str = include_str!("../index.mdx");
 
-<Counter initial=42 />
-
-```md
-# mdsycx
-## Sycamore in markdown
-
-<Counter initial=42 />
-```
-"#;
+#[wasm_bindgen]
+extern "C" {
+    #[wasm_bindgen(js_namespace=Prism, js_name=highlightAll)]
+    fn highlight_all();
+}
 
 #[derive(Prop, FromMd)]
 struct CounterProps<'a, G: Html> {
@@ -53,11 +48,13 @@ fn CodeBlock<'a, G: Html>(cx: Scope<'a>, props: CodeBlockProps<'a, G>) -> View<G
 #[component]
 fn App<G: Html>(cx: Scope) -> View<G> {
     let parsed = parse::<()>(MARKDOWN).expect("could not parse markdown");
-    log::debug!("Parsed events {:#?}", parsed.body.events);
+    log::debug!("Parsed events {:?}", parsed.body.events);
 
     let components = ComponentMap::new()
         .with("Counter", Counter)
         .with("pre", CodeBlock);
+
+    on_mount(cx, highlight_all);
 
     view! { cx,
         main {
