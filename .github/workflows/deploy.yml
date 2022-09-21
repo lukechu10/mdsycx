@@ -1,0 +1,48 @@
+name: Deploy to Github Pages
+
+on:
+  push:
+    branches: [master]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Setup Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          target: wasm32-unknown-unknown
+
+      - name: Install trunk
+        run: >
+          wget -qO-
+          https://github.com/thedodd/trunk/releases/download/v0.16.0/trunk-x86_64-unknown-linux-gnu.tar.gz
+          | tar -xzf- && sudo mv trunk /usr/bin/
+
+      - name: Cargo cache
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Build
+        run: cd website && trunk build --release --public-url /mdsycx/
+
+      - name: Create .nojekyll file
+        run: touch website/dist/.nojekyll
+
+      - name: Publish to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3.7.0
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_branch: gh_pages
+          force_orphan: true
+          publish_dir: website/dist/
+          enable_jekyll: false
