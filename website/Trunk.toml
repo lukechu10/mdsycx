@@ -1,4 +1,4 @@
 [[hooks]]
-stage = "pre_build"
+stage = "post_build"
 command = "cargo"
-command_arguments = ["build"]
+command_arguments = ["run"]

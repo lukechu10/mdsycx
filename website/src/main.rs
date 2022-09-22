@@ -73,9 +73,10 @@ fn main() {
     }
     #[cfg(not(target_arch = "wasm32"))]
     {
-        let template = include_str!("../template.html");
+        let template = std::fs::read_to_string("dist/.stage/index.html")
+            .expect("could not read staged index.html");
         let rendered = sycamore::render_to_string(App);
         let index = template.replace("%sycamore.body%", &rendered);
-        std::fs::write("index.html", index).expect("could not write to index.html");
+        std::fs::write("dist/.stage/index.html", index).expect("could not write to staged index.html");
     }
 }
