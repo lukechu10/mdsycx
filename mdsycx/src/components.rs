@@ -43,12 +43,14 @@ pub struct ComponentMap<'a, G: Html> {
 }
 
 impl<'a, G: Html> ComponentMap<'a, G> {
+    /// Create a new empty [`ComponentMap`].
     pub fn new() -> Self {
         Self {
             map: Default::default(),
         }
     }
 
+    /// Adds a mapping between a component name and its actual implementation.
     pub fn with<F, Props>(mut self, name: &'static str, f: F) -> Self
     where
         F: Fn(Scope<'a>, Props) -> View<G> + 'static,
@@ -66,6 +68,7 @@ impl<'a, G: Html> Default for ComponentMap<'a, G> {
     }
 }
 
+/// Props for [`MDSycX`].
 #[derive(Prop)]
 pub struct MdSycXProps<'a, G: Html> {
     body: BodyRes<'a>,

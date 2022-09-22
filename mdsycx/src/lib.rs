@@ -1,7 +1,13 @@
-//! # MDSycX (Markdown Sycamore Extensions)
+//! # mdsycx
 //!
-//! This crate allows you to easily render Markdown with Sycamore! Oh? You want to use your Sycamore
-//! components in your Markdown? Don't worry, we got that covered!
+//! **markdown with Sycamore**
+//!
+//! Plain ol’ markdown is a bit boring… What if we could spice it up with [Sycamore](https://sycamore-rs.netlify.app)?
+//! Meet **mdsycx**!
+//!
+//! For more information, check out the [website](https://lukechu10.github.io/mdsycx/).
+
+#![warn(missing_docs)]
 
 mod components;
 mod parser;
@@ -20,10 +26,17 @@ pub mod rt {
     pub use serde;
 }
 
+/// An error returned from [`FromMd::set_prop`].
 #[derive(Debug, Error)]
 pub enum SetPropError {
+    /// A prop with this name does not exist.
+    /// 
+    /// In markdown, props are stringly typed so the name must match exactly.
     #[error("a prop with this name does not exist")]
     UnknownProp,
+    /// Could not parse the string into the prop type.
+    /// 
+    /// Parsing is performed using the [`FromStr`](std::str::FromStr) trait.
     #[error("could not parse value into prop type")]
     Parse,
 }

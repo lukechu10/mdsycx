@@ -9,16 +9,21 @@ use quick_xml::reader::Reader;
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
-/// An error from parsing MDSycX.
+/// An error from parsing mdsycx.
 #[derive(Debug, Error)]
 pub enum ParseError {
+    /// The front matter section was encountered but could not find ending delimiter.
+    ///
+    /// This means that a `---` was found at the top of the file but the ending `---` could not be
+    /// found.
     #[error("front matter is missing end delimiter")]
     MissingFrontMatterEndDelimiter,
+    /// Could not deserialize the front matter into the type. Deserialization uses [`serde_yaml`].
     #[error("could not parse yaml")]
     DeserializeError(#[from] serde_yaml::Error),
 }
 
-/// The result of parsing MDSycX.
+/// The result of parsing mdsycx.
 pub struct ParseRes<'a, T> {
     /// The parsed MD front matter. If no front matter was present, this has a value of `None`.
     pub front_matter: Option<T>,
@@ -26,10 +31,11 @@ pub struct ParseRes<'a, T> {
     pub body: BodyRes<'a>,
 }
 
-#[derive(Serialize, Deserialize)]
+/// The parsed markdown file.
+#[derive(Debug, Serialize, Deserialize)]
 pub struct BodyRes<'a> {
     #[serde(borrow)]
-    pub events: Vec<Event<'a>>,
+    pub(crate) events: Vec<Event<'a>>,
 }
 
 /// Tree events, or "instructions" that can be serialized and rendered with Sycamore.
@@ -74,6 +80,8 @@ where
 
 /// Parse Markdown into structured events.
 fn parse_md(input: &str) -> BodyRes {
+    let md_parser = pulldown_cmark::Parser::new_ext(input, Options::all());
+    dbg!(md_parser.collect::<Vec<_>>());
     let mut md_parser = pulldown_cmark::Parser::new_ext(input, Options::all()).peekable();
 
     let mut events = Vec::new();
@@ -251,6 +259,10 @@ fn parse_html<'a>(input: &str, events: &mut Vec<Event<'a>>) {
     let mut reader = Reader::from_str(input);
     reader.trim_text(true);
 
+    // Keep track of the element depth. If the depth is not 0 when parsing is finished, that means
+    // that the HTML was mal-formed and we need to emit extra End tags.
+    let mut depth = 0;
+
     let mut buf = Vec::new();
     loop {
         match reader.read_event_into(&mut buf) {
@@ -264,8 +276,19 @@ fn parse_html<'a>(input: &str, events: &mut Vec<Event<'a>>) {
                         String::from_utf8(attr.value.to_vec()).unwrap().into(),
                     ));
                 }
+                depth += 1;
             }
-            Ok(XmlEvent::End(_)) => events.push(Event::End),
+            Ok(XmlEvent::End(_)) => {
+                if depth != 0 {
+                    events.push(Event::End);
+                    depth -= 1;
+                } else {
+                    #[cfg(target_arch = "wasm32")]
+                    web_sys::console::warn_1(&"html tags are not balanced".into());
+                    #[cfg(not(target_arch = "wasm32"))]
+                    eprintln!("html tags are not balanced");
+                }
+            }
             Ok(XmlEvent::Empty(start)) => {
                 events.push(Event::Start(
                     String::from_utf8(start.name().0.to_vec()).unwrap().into(),
@@ -281,7 +304,7 @@ fn parse_html<'a>(input: &str, events: &mut Vec<Event<'a>>) {
             Ok(XmlEvent::Text(text)) => {
                 events.push(Event::Text(text.unescape().unwrap().to_string().into()))
             }
-            Ok(XmlEvent::Eof) => return,
+            Ok(XmlEvent::Eof) => break,
             Err(e) => {
                 #[cfg(target_arch = "wasm32")]
                 web_sys::console::warn_1(&format!("html parsing error: {e}").into());
@@ -292,5 +315,113 @@ fn parse_html<'a>(input: &str, events: &mut Vec<Event<'a>>) {
         }
 
         buf.clear();
+    }
+
+    if depth > 0 {
+        #[cfg(target_arch = "wasm32")]
+        web_sys::console::warn_1(&"html tags are not balanced".into());
+        #[cfg(not(target_arch = "wasm32"))]
+        eprintln!("html tags are not balanced");
+
+        for _ in 0..depth {
+            events.push(Event::End);
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use expect_test::{expect, Expect};
+
+    use super::*;
+
+    fn check(input: &str, expect: Expect) {
+        let actual = parse_md(input);
+        expect.assert_eq(&format!("{:?}", actual.events));
+    }
+
+    #[test]
+    fn parse_empty() {
+        check(r#""#, expect!["[]"]);
+    }
+
+    #[test]
+    fn parse_md_text() {
+        check(
+            r#"
+Hello World!
+Goodbye World!"#,
+            expect![[
+                r#"[Start("p"), Text("Hello World!"), Text(" "), Text("Goodbye World!"), End]"#
+            ]],
+        );
+    }
+
+    #[test]
+    fn parse_md_features() {
+        check(
+            r#"
+# My heading
+## My subtitle
+My text
+
+- List item"#,
+            expect![[
+                r#"[Start("h1"), Text("My heading"), End, Start("h2"), Text("My subtitle"), End, Start("p"), Text("My text"), End, Start("ul"), Start("li"), Text("List item"), End, End]"#
+            ]],
+        );
+    }
+
+    #[test]
+    fn parse_html_block() {
+        check(
+            r#"<div id="test">A div!</div>"#,
+            expect![[r#"[Start("div"), Attr("id", "test"), Text("A div!"), End]"#]],
+        );
+    }
+
+    #[test]
+    fn parse_html_self_closing_tag() {
+        check(r#"<br />"#, expect![[r#"[Start("br"), End]"#]]);
+    }
+
+    #[test]
+    fn parse_nested_html() {
+        check(
+            r#"<div><p>Test</p></div>"#,
+            expect![[r#"[Start("div"), Start("p"), Text("Test"), End, End]"#]],
+        );
+    }
+
+    #[test]
+    fn parse_multiline_html() {
+        check(
+            r#"
+<div>
+    <p>Nested</p>
+    Text
+</div>"#,
+            expect![[r#"[Start("div"), Start("p"), Text("Nested"), End, Text("Text"), End]"#]],
+        );
+    }
+
+    #[test]
+    fn parse_inline_html_in_text() {
+        check(
+            r#"<i>Some inline</i> text"#,
+            expect![[r#"[Start("p"), Start("i"), End, Text("Some inline"), Text(" text"), End]"#]],
+        );
+        check(
+            r#"Some inline <em>text</em>"#,
+            expect![[r#"[Start("p"), Text("Some inline "), Start("em"), End, Text("text"), End]"#]],
+        );
+    }
+
+    #[test]
+    fn parse_inline_nested_html() {
+        check(
+            r#"Some inline <span><i>text</i></span>"#,
+            expect![[r#"[Start("p"), Text("Some inline "), Start("span"), Start("i"), End, End, Text("text"), End]"#]],
+        );
     }
 }

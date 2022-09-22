@@ -48,7 +48,7 @@ fn CodeBlock<'a, G: Html>(cx: Scope<'a>, props: CodeBlockProps<'a, G>) -> View<G
 #[component]
 fn App<G: Html>(cx: Scope) -> View<G> {
     let parsed = parse::<()>(MARKDOWN).expect("could not parse markdown");
-    log::debug!("Parsed events {:?}", parsed.body.events);
+    log::debug!("Parsed events {:?}", parsed.body);
 
     let components = ComponentMap::new()
         .with("Counter", Counter)
