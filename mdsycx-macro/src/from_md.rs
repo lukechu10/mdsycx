@@ -91,15 +91,16 @@ pub fn from_md_impl(input: FromMdItem) -> TokenStream {
                 }
             }
 
-            fn set_prop(&mut self, name: &::std::primitive::str, value: &::std::primitive::str) {
+            fn set_prop(&mut self, name: &::std::primitive::str, value: &::std::primitive::str) -> ::std::result::Result<(), ::mdsycx::SetPropError> {
                 match name {
                     #(
                     #idents_str => {
-                        let data: #idents_ty = ::std::str::FromStr::from_str(value).unwrap();
+                        let data: #idents_ty = ::std::str::FromStr::from_str(value).map_err(|_| ::mdsycx::SetPropError::Parse)?;
                         self.#idents = data;
+                        ::std::result::Result::Ok(())
                     }
                     )*
-                    _ => ::std::panic!("unknown prop"),
+                    _ => ::std::result::Result::Err(::mdsycx::SetPropError::UnknownProp),
                 }
             }
 

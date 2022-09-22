@@ -50,14 +50,11 @@ Using mdsycx in your Sycamore app is as easy as pie! Use the `mdsycx::parse` fun
 markdown file and use the `mdsycx::MDSycX` component to render it using Sycamore.
 
 ```rust
-#[component]
-fn App<G: Html>(cx: Scope) -> View<G> {
-    let parsed = parse::<()>(markdown).unwrap();
+let parsed = parse::<()>(markdown).unwrap();
 
-    view! { cx,
-        div(class="markdown-container") {
-            MDSycX(body=parsed.body)
-        }
+view! { cx,
+    div(class="markdown-container") {
+        MDSycX(body=parsed.body)
     }
 }
 ```
@@ -80,7 +77,7 @@ automatically using the derive macro.
 pub struct MyProps<'a, G: Html> {
     /// A prop that can be set from markdown.
     special_number: i32,
-    /// The `children` prop is required for all components.
+    /// The `children` prop is always required.
     children: Children<'a, G>,
 }
 ```
@@ -137,7 +134,7 @@ let components = ComponentMap::new()
 Note that all props are optional and will be set to their default value if they are missing in
 markdown.
 
-## Pre-parsing your markdown
+## Parsing markdown at compile-time
 
 TODO: This part hasn't been written yet.
 

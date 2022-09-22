@@ -25,7 +25,12 @@ where
     move |cx, (props_serialized, children)| {
         let mut props = Props::new_prop_default();
         for (name, value) in props_serialized {
-            props.set_prop(name, value);
+            if let Err(err) = props.set_prop(name, value) {
+                #[cfg(target_arch = "wasm32")]
+                web_sys::console::warn_1(&format!("error setting prop {name}: {err}").into());
+                #[cfg(not(target_arch = "wasm32"))]
+                eprintln!("error setting prop {name}: {err}");
+            }
         }
         props.set_children(children);
         f(cx, props)
