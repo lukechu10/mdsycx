@@ -134,7 +134,6 @@ let components = ComponentMap::new()
 Note that all props are optional and will be set to their default value if they are missing in
 markdown.
 
-
 ## Front matter
 
 Your markdown file can contain a special section called the front matter. This is a place where you
@@ -163,7 +162,12 @@ TODO: This part hasn't been written yet.
 
 ## Server Side Rendering (SSR)
 
-TODO: This part hasn't been written yet.
+Sycamore's Server Side Rendering support should work out of the box! Just make sure you are
+rendering the same thing on both the server and the client!
+
+```rust
+let string = sycamore::render_to_string(App);
+```
 
 ## Roadmap
 

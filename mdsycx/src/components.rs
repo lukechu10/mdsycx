@@ -5,6 +5,7 @@ use std::rc::Rc;
 
 use sycamore::prelude::*;
 use sycamore::utils::render::insert;
+use sycamore::web::from_web_sys;
 
 use crate::{BodyRes, Event, FromMd};
 
@@ -118,9 +119,21 @@ fn events_to_view<'a, G: Html>(
                 match tag {
                     TagType::Element(tag) => {
                         let node = G::element_from_tag(tag);
+                        // FIXME: remove this hack for hydration.
+                        let initial = if G::CLIENT_SIDE_HYDRATION {
+                            let node = node.to_web_sys();
+                            let child_nodes = node.child_nodes();
+                            let mut children = Vec::new();
+                            for i in 0..child_nodes.length() {
+                                children.push(View::new_node(from_web_sys(child_nodes.get(i).unwrap())));
+                            }
+                            Some(View::new_fragment(children))
+                        } else {
+                            None
+                        };
                         // Add children to node.
                         let children = fragments_stack.pop().expect("events are not balanced");
-                        insert(cx, &node, View::new_fragment(children), None, None, false);
+                        insert(cx, &node, View::new_fragment(children), initial, None, false);
                         // Add attributes to node.
                         let attributes = attr_stack.pop().expect("events are not balanced");
                         for (name, value) in attributes {
@@ -149,10 +162,14 @@ fn events_to_view<'a, G: Html>(
                     .expect("cannot set attributes without an element")
                     .push((name, value));
             }
-            Event::Text(text) => fragments_stack
-                .last_mut()
-                .expect("should always have at least one fragment on stack")
-                .push(View::new_node(G::text_node(text))),
+            Event::Text(text) => {
+                // if !G::CLIENT_SIDE_HYDRATION {
+                fragments_stack
+                    .last_mut()
+                    .expect("should always have at least one fragment on stack")
+                    .push(View::new_node(G::text_node(text)))
+                // }
+            }
         }
     }
 

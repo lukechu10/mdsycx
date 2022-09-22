@@ -302,11 +302,13 @@ checksum = "2fd0db749597d91ff862fd1d55ea87f7855a744a8425a64695b6fca237d1dad1"
 [[package]]
 name = "sycamore"
 version = "0.8.1"
-source = "git+https://github.com/sycamore-rs/sycamore?rev=2210e94#2210e94a66edaa5bf4305ef7bd06c0ca694fdff0"
+source = "git+https://github.com/sycamore-rs/sycamore?rev=2a7d015#2a7d015b68af1f49430e8800930c4394d7b7bfc8"
 dependencies = [
  "ahash",
+ "html-escape",
  "indexmap",
  "js-sys",
+ "once_cell",
  "paste",
  "sycamore-core",
  "sycamore-macro",
@@ -319,7 +321,7 @@ dependencies = [
 [[package]]
 name = "sycamore-core"
 version = "0.8.0"
-source = "git+https://github.com/sycamore-rs/sycamore?rev=2210e94#2210e94a66edaa5bf4305ef7bd06c0ca694fdff0"
+source = "git+https://github.com/sycamore-rs/sycamore?rev=2a7d015#2a7d015b68af1f49430e8800930c4394d7b7bfc8"
 dependencies = [
  "ahash",
  "sycamore-reactive",
@@ -328,7 +330,7 @@ dependencies = [
 [[package]]
 name = "sycamore-macro"
 version = "0.8.1"
-source = "git+https://github.com/sycamore-rs/sycamore?rev=2210e94#2210e94a66edaa5bf4305ef7bd06c0ca694fdff0"
+source = "git+https://github.com/sycamore-rs/sycamore?rev=2a7d015#2a7d015b68af1f49430e8800930c4394d7b7bfc8"
 dependencies = [
  "once_cell",
  "proc-macro2",
@@ -339,7 +341,7 @@ dependencies = [
 [[package]]
 name = "sycamore-reactive"
 version = "0.8.1"
-source = "git+https://github.com/sycamore-rs/sycamore?rev=2210e94#2210e94a66edaa5bf4305ef7bd06c0ca694fdff0"
+source = "git+https://github.com/sycamore-rs/sycamore?rev=2a7d015#2a7d015b68af1f49430e8800930c4394d7b7bfc8"
 dependencies = [
  "ahash",
  "bumpalo",
@@ -351,7 +353,7 @@ dependencies = [
 [[package]]
 name = "sycamore-web"
 version = "0.8.0"
-source = "git+https://github.com/sycamore-rs/sycamore?rev=2210e94#2210e94a66edaa5bf4305ef7bd06c0ca694fdff0"
+source = "git+https://github.com/sycamore-rs/sycamore?rev=2a7d015#2a7d015b68af1f49430e8800930c4394d7b7bfc8"
 dependencies = [
  "html-escape",
  "indexmap",

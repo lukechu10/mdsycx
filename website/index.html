@@ -49,5 +49,133 @@
     <link data-trunk rel="rust" data-wasm-opt="s" />
   </head>
 
-  <body></body>
+  <body>
+    <main data-hk="0.0"><div data-hk="1.4" class="links-section">
+  <a data-hk="1.0" href="#about">usage</a>
+  <a data-hk="1.1" href="https://github.com/lukechu10/mdsycx">github</a>
+  <a data-hk="1.2" href="https://docs.rs/mdsycx">docs.rs</a>
+  <a data-hk="1.3" href="https://crates.io/crates/mdsycx">crates.io</a>
+</div>
+<h1 data-hk="1.5">mdsycx</h1>
+<h2 data-hk="1.6">markdown with Sycamore</h2>
+<div data-hk="1.7" class="counter"><button data-hk="1.8" type="button">-</button><span data-hk="1.9">42</span><button data-hk="1.10" type="button">+</button></div>
+<pre data-hk="1.12" class="codeblock"><code data-hk="1.11" class="language-md"># mdsycx
+
+## markdown with Sycamore
+
+&lt;Counter initial="42" />
+</code></pre>
+<br data-hk="1.13"/>
+<hr data-hk="1.14"/>
+<h2 data-hk="1.15" id="about">About</h2>
+<p data-hk="1.17">Plain ol’ markdown is a bit boring… What if we could spice it up with
+<a data-hk="1.16" href="https://sycamore-rs.netlify.app">Sycamore</a>?</p>
+<p data-hk="1.19">Meet <strong data-hk="1.18">mdsycx</strong>!</p>
+<h2 data-hk="1.20">Installation</h2>
+<p data-hk="1.21">Just run the following command and you are all set to go.</p>
+<pre data-hk="1.23" class="codeblock"><code data-hk="1.22" class="language-sh">cargo add mdsycx
+</code></pre>
+<p data-hk="1.25">Alternatively, you can manually add this line to your <code data-hk="1.24">Cargo.toml</code> file.</p>
+<pre data-hk="1.27" class="codeblock"><code data-hk="1.26" class="language-toml">mdsycx = "0.1"
+</code></pre>
+<h2 data-hk="1.28">Usage</h2>
+<p data-hk="1.31">Using mdsycx in your Sycamore app is as easy as pie! Use the <code data-hk="1.29">mdsycx::parse</code> function to parse your
+markdown file and use the <code data-hk="1.30">mdsycx::MDSycX</code> component to render it using Sycamore.</p>
+<pre data-hk="1.33" class="codeblock"><code data-hk="1.32" class="language-rust">let parsed = parse::&lt;()>(markdown).unwrap();
+
+view! { cx,
+    div(class="markdown-container") {
+        MDSycX(body=parsed.body)
+    }
+}
+</code></pre>
+<h2 data-hk="1.34">Markdown syntax</h2>
+<p data-hk="1.38">Use all your favorite features from markdown. mdsycx uses the excellent
+<a data-hk="1.36" href="https://github.com/raphlinus/pulldown-cmark"><code data-hk="1.35">pulldown-cmark</code></a> crate as a
+<a data-hk="1.37" href="https://commonmark.org/">CommonMark</a> spec-compliant parser.</p>
+<h2 data-hk="1.39">Using components in your markdown</h2>
+<p data-hk="1.40">As advertised, it is possible to use Sycamore components directly in your markdown file.</p>
+<p data-hk="1.42">To do so, you need to make sure the props implement the <code data-hk="1.41">FromMd</code> trait. Luckily, this can be derived
+automatically using the derive macro.</p>
+<pre data-hk="1.44" class="codeblock"><code data-hk="1.43" class="language-rust">#[derive(Prop, FromMd)]
+pub struct MyProps&lt;'a, G: Html> {
+    /// A prop that can be set from markdown.
+    special_number: i32,
+    /// The `children` prop is always required.
+    children: Children&lt;'a, G>,
+}
+</code></pre>
+<p data-hk="1.45">Next, create a component with props of this type. Nothing special is going on here, just your
+regular Sycamore component.</p>
+<pre data-hk="1.47" class="codeblock"><code data-hk="1.46" class="language-rust">#[component]
+fn MyComponent&lt;'a, G: Html>(cx: Scope&lt;'a>, props: MyProps&lt;'a, G>) -> View&lt;G> {
+    let children = props.children.call(cx);
+    view! { cx,
+        div {
+            p { "Your special number is " (props.special_number) "!" }
+            p { "Everything else:" }
+            (children)
+        }
+    }
+}
+</code></pre>
+<p data-hk="1.50">Last step is to provide this component to the <code data-hk="1.48">MDSycX</code> component. To do so, you need to create a
+<code data-hk="1.49">ComponentMap</code>. Basically, this tells mdsycx which component to use when it sees a component in
+markdown.</p>
+<pre data-hk="1.52" class="codeblock"><code data-hk="1.51" class="language-rust">let components = ComponentMap::new()
+    .with("MyComponent", MyComponent)
+    .with(/* as many components as you like */);
+
+view! { cx,
+    div(class="markdown-container") {
+        MDSycX(body=parsed.body, components=components)
+    }
+}
+</code></pre>
+<p data-hk="1.53">All that’s left is to use your fancy new component!</p>
+<pre data-hk="1.55" class="codeblock"><code data-hk="1.54" class="language-md">&lt;MyComponent special_number="123">
+    Hello from inside!
+&lt;/MyComponent>
+</code></pre>
+<p data-hk="1.57">In fact, you can even replace built-in HTML elements such as <code data-hk="1.56">&lt;a></code> with your custom components! How
+cool is that?</p>
+<pre data-hk="1.59" class="codeblock"><code data-hk="1.58" class="language-rust">let components = ComponentMap::new()
+    .with("a", SpecialLink);
+</code></pre>
+<p data-hk="1.60">Note that all props are optional and will be set to their default value if they are missing in
+markdown.</p>
+<h2 data-hk="1.61">Front matter</h2>
+<p data-hk="1.64">Your markdown file can contain a special section called the front matter. This is a place where you
+can specify <em data-hk="1.62">metadata</em> about your markdown file (such as the time it was written, or the author,
+etc…). The front matter should be surrounded by “<code data-hk="1.63">---</code>” characters at the top of your file and the
+data should be in YAML format.</p>
+<p data-hk="1.68">You might have noticed that the <code data-hk="1.65">mdsycx::parse</code> function is actually generic. The generic parameter
+is the type of the front matter of the document. To access the data in the front-matter, you can use
+the <code data-hk="1.66">.front_matter</code> field on the struct returned from <code data-hk="1.67">mdsycx::parse</code>.</p>
+<pre data-hk="1.70" class="codeblock"><code data-hk="1.69" class="language-md">---
+title: Writing markdown with mdsycx
+author: Me
+---
+
+# Writing markdown with mdsycx
+
+Yada yada...
+</code></pre>
+<h2 data-hk="1.71">Parsing markdown at compile-time</h2>
+<p data-hk="1.72">TODO: This part hasn’t been written yet.</p>
+<h2 data-hk="1.73">Server Side Rendering (SSR)</h2>
+<p data-hk="1.74">Sycamore’s Server Side Rendering support should work out of the box! Just make sure you are
+rendering the same thing on both the server and the client!</p>
+<pre data-hk="1.76" class="codeblock"><code data-hk="1.75" class="language-rust">let string = sycamore::render_to_string(App);
+</code></pre>
+<h2 data-hk="1.77">Roadmap</h2>
+<p data-hk="1.78">Many features are not yet imlpemented. Here are a few:</p>
+<ul data-hk="1.84">
+<li data-hk="1.80">Built-in syntax highlighting. Right now, we are using <a data-hk="1.79" href="https://prismjs.com/">Prism</a>.</li>
+<li data-hk="1.81">Combining and composing markdown files.</li>
+<li data-hk="1.82">Easily import your markdown files to Rust.</li>
+<li data-hk="1.83">And more! If you feel like we left out something important, please feel free to send us a PR!</li>
+</ul>
+</main>
+  </body>
 </html>

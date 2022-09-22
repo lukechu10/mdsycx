@@ -64,8 +64,18 @@ fn App<G: Html>(cx: Scope) -> View<G> {
 }
 
 fn main() {
-    console_error_panic_hook::set_once();
-    wasm_logger::init(wasm_logger::Config::default());
+    #[cfg(target_arch = "wasm32")]
+    {
+        console_error_panic_hook::set_once();
+        wasm_logger::init(wasm_logger::Config::default());
 
-    sycamore::render(App);
+        sycamore::hydrate(App);
+    }
+    #[cfg(not(target_arch = "wasm32"))]
+    {
+        let template = include_str!("../template.html");
+        let rendered = sycamore::render_to_string(App);
+        let index = template.replace("%sycamore.body%", &rendered);
+        std::fs::write("index.html", index).expect("could not write to index.html");
+    }
 }

@@ -94,7 +94,7 @@ fn parse_html<'a>(input: &str, events: &mut Vec<Event<'a>>) {
     let mut reader = Reader::from_str(input);
 
     // Keep track of the element depth. If the depth is not 0 when parsing is finished, that means
-    // that the HTML was mal-formed and we need to emit extra End tags.
+    // that the HTML was malformed and we need to emit extra End tags.
     let mut depth = 0;
 
     let mut buf = Vec::new();
