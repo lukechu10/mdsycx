@@ -7,6 +7,6 @@ edition = "2021"
 console_error_panic_hook = "0.1.7"
 log = "0.4.17"
 mdsycx = { path = "../mdsycx" }
-sycamore = { version = "0.8.1", features = ["hydrate", "ssr"] }
+sycamore = { version = "0.8.2", features = ["hydrate", "ssr"] }
 wasm-bindgen = "0.2.83"
 wasm-logger = "0.2.0"
