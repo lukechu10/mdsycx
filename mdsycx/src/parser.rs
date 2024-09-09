@@ -198,7 +198,9 @@ Goodbye World!"#,
 My text
 
 - List item"#,
-            expect![[r#"[Start("h1"), Text("My heading"), End, Text("\n"), Start("h2"), Text("My subtitle"), End, Text("\n"), Start("p"), Text("My text"), End, Text("\n"), Start("ul"), Text("\n"), Start("li"), Text("List item"), End, Text("\n"), End, Text("\n")]"#]],
+            expect![[
+                r#"[Start("h1"), Text("My heading"), End, Text("\n"), Start("h2"), Text("My subtitle"), End, Text("\n"), Start("p"), Text("My text"), End, Text("\n"), Start("ul"), Text("\n"), Start("li"), Text("List item"), End, Text("\n"), End, Text("\n")]"#
+            ]],
         );
     }
 
@@ -231,7 +233,9 @@ My text
     <p>Nested</p>
     Text
 </div>"#,
-            expect![[r#"[Start("div"), Text("\n    "), Start("p"), Text("Nested"), End, Text("\n    Text\n"), End]"#]],
+            expect![[
+                r#"[Start("div"), Text("\n    "), Start("p"), Text("Nested"), End, Text("\n    Text\n"), End]"#
+            ]],
         );
     }
 
@@ -239,11 +243,15 @@ My text
     fn parse_inline_html_in_text() {
         check(
             r#"<i>Some inline</i> text"#,
-            expect![[r#"[Start("p"), Start("i"), Text("Some inline"), End, Text(" text"), End, Text("\n")]"#]],
+            expect![[
+                r#"[Start("p"), Start("i"), Text("Some inline"), End, Text(" text"), End, Text("\n")]"#
+            ]],
         );
         check(
             r#"Some inline <em>text</em>"#,
-            expect![[r#"[Start("p"), Text("Some inline "), Start("em"), Text("text"), End, End, Text("\n")]"#]],
+            expect![[
+                r#"[Start("p"), Text("Some inline "), Start("em"), Text("text"), End, End, Text("\n")]"#
+            ]],
         );
     }
 
@@ -251,7 +259,9 @@ My text
     fn parse_inline_nested_html() {
         check(
             r#"Some inline <span><i>text</i></span>"#,
-            expect![[r#"[Start("p"), Text("Some inline "), Start("span"), Start("i"), Text("text"), End, End, End, Text("\n")]"#]],
+            expect![[
+                r#"[Start("p"), Text("Some inline "), Start("span"), Start("i"), Text("text"), End, End, End, Text("\n")]"#
+            ]],
         );
     }
 }

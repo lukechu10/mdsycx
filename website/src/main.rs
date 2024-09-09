@@ -18,7 +18,7 @@ struct CounterProps {
 
 #[component]
 fn Counter(props: CounterProps) -> View {
-    let mut counter = create_signal( props.initial);
+    let mut counter = create_signal(props.initial);
     let increment = move |_| counter += 1;
     let decrement = move |_| counter -= 1;
     view! {
@@ -74,6 +74,7 @@ fn main() {
             .expect("could not read staged index.html");
         let rendered = sycamore::render_to_string(App);
         let index = template.replace("%sycamore.body%", &rendered);
-        std::fs::write("dist/.stage/index.html", index).expect("could not write to staged index.html");
+        std::fs::write("dist/.stage/index.html", index)
+            .expect("could not write to staged index.html");
     }
 }

@@ -1,10 +1,10 @@
 //! Sycamore bindings for rendering MD with components.
 
-use std::{borrow::Cow, collections::HashMap};
 use std::rc::Rc;
+use std::{borrow::Cow, collections::HashMap};
 
-use sycamore::web::{ ViewHtmlNode, ViewNode};
-use sycamore::{prelude::*};
+use sycamore::prelude::*;
+use sycamore::web::{ViewHtmlNode, ViewNode};
 
 use crate::{BodyRes, Event, FromMd};
 
@@ -86,10 +86,7 @@ enum TagType {
     Component(MdComponent),
 }
 
-fn events_to_view(
-    events: Vec<Event<'static>>,
-    components: ComponentMap,
-) -> View {
+fn events_to_view(events: Vec<Event<'static>>, components: ComponentMap) -> View {
     // A stack of fragments. The bottom fragment is the view that is returned. Subsequent fragments
     // are those in nested elements.
     let mut fragments_stack: Vec<Vec<View>> = vec![Vec::new()];

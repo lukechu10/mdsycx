@@ -52,7 +52,7 @@ markdown file and use the `mdsycx::MDSycX` component to render it using Sycamore
 ```rust
 let parsed = parse::<()>(markdown).unwrap();
 
-view! { cx,
+view! {
     div(class="markdown-container") {
         MDSycX(body=parsed.body)
     }
@@ -73,12 +73,12 @@ To do so, you need to make sure the props implement the `FromMd` trait. Luckily,
 automatically using the derive macro.
 
 ```rust
-#[derive(Prop, FromMd)]
-pub struct MyProps<'a, G: Html> {
+#[derive(Props, FromMd)]
+pub struct MyProps {
     /// A prop that can be set from markdown.
     special_number: i32,
     /// The `children` prop is always required.
-    children: Children<'a, G>,
+    children: Children,
 }
 ```
 
@@ -87,9 +87,9 @@ regular Sycamore component.
 
 ```rust
 #[component]
-fn MyComponent<'a, G: Html>(cx: Scope<'a>, props: MyProps<'a, G>) -> View<G> {
-    let children = props.children.call(cx);
-    view! { cx,
+fn MyComponent(props: MyProps) -> View {
+    let children = props.children.call();
+    view! {
         div {
             p { "Your special number is " (props.special_number) "!" }
             p { "Everything else:" }
@@ -108,7 +108,7 @@ let components = ComponentMap::new()
     .with("MyComponent", MyComponent)
     .with(/* as many components as you like */);
 
-view! { cx,
+view! {
     div(class="markdown-container") {
         MDSycX(body=parsed.body, components=components)
     }
@@ -155,10 +155,6 @@ author: Me
 
 Yada yada...
 ```
-
-## Parsing markdown at compile-time
-
-TODO: This part hasn't been written yet.
 
 ## Server Side Rendering (SSR)
 

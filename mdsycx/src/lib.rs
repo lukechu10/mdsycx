@@ -30,12 +30,12 @@ pub mod rt {
 #[derive(Debug, Error)]
 pub enum SetPropError {
     /// A prop with this name does not exist.
-    /// 
+    ///
     /// In markdown, props are stringly typed so the name must match exactly.
     #[error("a prop with this name does not exist")]
     UnknownProp,
     /// Could not parse the string into the prop type.
-    /// 
+    ///
     /// Parsing is performed using the [`FromStr`](std::str::FromStr) trait.
     #[error("could not parse value into prop type")]
     Parse,
