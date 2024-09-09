@@ -42,12 +42,12 @@ pub enum SetPropError {
 }
 
 /// Implemented by [`FromMd`](mdsycx_macro::FromMd) derive-macro.
-pub trait FromMd<G: GenericNode> {
+pub trait FromMd: 'static {
     /// Create a new instance of the props.
     fn new_prop_default() -> Self;
     /// Set a prop by name. If a prop with the specified name does not exist or if the value could
     /// not be parsed, this returns an error.
     fn set_prop(&mut self, name: &str, value: &str) -> Result<(), SetPropError>;
     /// Set the `children` prop.
-    fn set_children(&mut self, value: View<G>);
+    fn set_children(&mut self, value: View);
 }

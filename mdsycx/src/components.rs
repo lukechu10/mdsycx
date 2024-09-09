@@ -1,32 +1,29 @@
 //! Sycamore bindings for rendering MD with components.
 
-use std::collections::HashMap;
+use std::{borrow::Cow, collections::HashMap};
 use std::rc::Rc;
 
-use sycamore::prelude::*;
-use sycamore::utils::render::insert;
-use sycamore::web::from_web_sys;
+use sycamore::web::{ ViewHtmlNode, ViewNode};
+use sycamore::{prelude::*};
 
 use crate::{BodyRes, Event, FromMd};
 
-type MdComponentProps<'a, G> = (Vec<(&'a str, &'a str)>, View<G>);
+type MdComponentProps = (Vec<(String, String)>, View);
 
 /// A type-erased component that can be used from Markdown.
-type MdComponent<'a, G> = Rc<dyn Fn(Scope<'a>, MdComponentProps<G>) -> View<G> + 'a>;
+type MdComponent = Rc<dyn Fn(MdComponentProps) -> View + 'static>;
 
 /// Convert a Sycamore component into a type-erased component. The props need to implement
 /// [`FromMd`].
-fn into_type_erased_component<'a, G: Html, F, Props>(
-    f: F,
-) -> impl Fn(Scope<'a>, MdComponentProps<G>) -> View<G>
+fn into_type_erased_component<F, Props>(f: F) -> impl Fn(MdComponentProps) -> View
 where
-    F: Fn(Scope<'a>, Props) -> View<G>,
-    Props: FromMd<G>,
+    F: Fn(Props) -> View,
+    Props: FromMd,
 {
-    move |cx, (props_serialized, children)| {
+    move |(props_serialized, children)| {
         let mut props = Props::new_prop_default();
         for (name, value) in props_serialized {
-            if let Err(err) = props.set_prop(name, value) {
+            if let Err(err) = props.set_prop(&name, &value) {
                 #[cfg(target_arch = "wasm32")]
                 web_sys::console::warn_1(&format!("error setting prop {name}: {err}").into());
                 #[cfg(not(target_arch = "wasm32"))]
@@ -34,16 +31,16 @@ where
             }
         }
         props.set_children(children);
-        f(cx, props)
+        f(props)
     }
 }
 
 /// A map from component names to component functions.
-pub struct ComponentMap<'a, G: Html> {
-    map: HashMap<String, MdComponent<'a, G>>,
+pub struct ComponentMap {
+    map: HashMap<String, MdComponent>,
 }
 
-impl<'a, G: Html> ComponentMap<'a, G> {
+impl ComponentMap {
     /// Create a new empty [`ComponentMap`].
     pub fn new() -> Self {
         Self {
@@ -54,8 +51,8 @@ impl<'a, G: Html> ComponentMap<'a, G> {
     /// Adds a mapping between a component name and its actual implementation.
     pub fn with<F, Props>(mut self, name: &'static str, f: F) -> Self
     where
-        F: Fn(Scope<'a>, Props) -> View<G> + 'static,
-        Props: FromMd<G> + 'a,
+        F: Fn(Props) -> View + 'static,
+        Props: FromMd,
     {
         self.map
             .insert(name.to_string(), Rc::new(into_type_erased_component(f)));
@@ -63,42 +60,41 @@ impl<'a, G: Html> ComponentMap<'a, G> {
     }
 }
 
-impl<'a, G: Html> Default for ComponentMap<'a, G> {
+impl Default for ComponentMap {
     fn default() -> Self {
         Self::new()
     }
 }
 
 /// Props for [`MDSycX`].
-#[derive(Prop)]
-pub struct MdSycXProps<'a, G: Html> {
-    body: BodyRes<'a>,
-    #[builder(default)]
-    components: ComponentMap<'a, G>,
+#[derive(Props)]
+pub struct MdSycXProps {
+    body: BodyRes<'static>,
+    #[prop(default)]
+    components: ComponentMap,
 }
 
 /// Renders your Sycamore augmented markdown.
 #[component]
-pub fn MDSycX<'a, G: Html>(cx: Scope<'a>, props: MdSycXProps<'a, G>) -> View<G> {
-    let events = create_ref(cx, props.body.events);
-    events_to_view(cx, events, props.components)
+pub fn MDSycX(props: MdSycXProps) -> View {
+    let events = props.body.events;
+    events_to_view(events, props.components)
 }
 
-enum TagType<'a, G: Html> {
-    Element(&'a str),
-    Component(MdComponent<'a, G>),
+enum TagType {
+    Element(Cow<'static, str>),
+    Component(MdComponent),
 }
 
-fn events_to_view<'a, G: Html>(
-    cx: Scope<'a>,
-    events: &'a [Event<'a>],
-    components: ComponentMap<'a, G>,
-) -> View<G> {
+fn events_to_view(
+    events: Vec<Event<'static>>,
+    components: ComponentMap,
+) -> View {
     // A stack of fragments. The bottom fragment is the view that is returned. Subsequent fragments
     // are those in nested elements.
-    let mut fragments_stack = vec![Vec::new()];
+    let mut fragments_stack: Vec<Vec<View>> = vec![Vec::new()];
     // Attributes that should be added when end tag is reached.
-    let mut attr_stack = vec![Vec::new()];
+    let mut attr_stack: Vec<Vec<(String, String)>> = vec![Vec::new()];
     // Elements that should be constructed when the end tag is reached.
     let mut tag_stack = Vec::new();
     for ev in events {
@@ -118,37 +114,25 @@ fn events_to_view<'a, G: Html>(
                 let tag = tag_stack.pop().expect("events are not balanced");
                 match tag {
                     TagType::Element(tag) => {
-                        let node = G::element_from_tag(tag);
-                        // FIXME: remove this hack for hydration.
-                        let initial = if G::CLIENT_SIDE_HYDRATION {
-                            let node = node.to_web_sys();
-                            let child_nodes = node.child_nodes();
-                            let mut children = Vec::new();
-                            for i in 0..child_nodes.length() {
-                                children.push(View::new_node(from_web_sys(child_nodes.get(i).unwrap())));
-                            }
-                            Some(View::new_fragment(children))
-                        } else {
-                            None
-                        };
+                        let mut node = sycamore::web::HtmlNode::create_element(tag);
                         // Add children to node.
                         let children = fragments_stack.pop().expect("events are not balanced");
-                        insert(cx, &node, View::new_fragment(children), initial, None, false);
+                        node.append_view(children.into());
                         // Add attributes to node.
                         let attributes = attr_stack.pop().expect("events are not balanced");
                         for (name, value) in attributes {
-                            node.set_attribute(name, value);
+                            node.set_attribute(name.into(), value.into());
                         }
                         fragments_stack
                             .last_mut()
                             .expect("should always have at least one fragment on stack")
-                            .push(View::new_node(node));
+                            .push(node.into());
                     }
                     TagType::Component(component) => {
                         // Collect attributes into serde_json::Value.
                         let attributes = attr_stack.pop().expect("events are not balanced");
                         let children = fragments_stack.pop().expect("events are not balanced");
-                        let node = component(cx, (attributes, View::new_fragment(children)));
+                        let node = component((attributes, children.into()));
                         fragments_stack
                             .last_mut()
                             .expect("should always have at least one fragment on stack")
@@ -160,22 +144,21 @@ fn events_to_view<'a, G: Html>(
                 attr_stack
                     .last_mut()
                     .expect("cannot set attributes without an element")
-                    .push((name, value));
+                    .push((name.to_string(), value.to_string()));
             }
             Event::Text(text) => {
-                // if !G::CLIENT_SIDE_HYDRATION {
+                let node: View = text.to_string().into();
                 fragments_stack
                     .last_mut()
                     .expect("should always have at least one fragment on stack")
-                    .push(View::new_node(G::text_node(text)))
-                // }
+                    .push(node)
             }
         }
     }
 
     if fragments_stack.len() != 1 {
-        // TODO: emit warning
+        panic!("fragment stack is not balanced");
     }
 
-    View::new_fragment(fragments_stack[0].clone())
+    fragments_stack.into_iter().next().unwrap().into()
 }

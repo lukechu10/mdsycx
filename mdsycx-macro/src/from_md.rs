@@ -3,7 +3,7 @@ use proc_macro_error::abort;
 use quote::quote;
 use syn::parse::{Parse, ParseStream};
 use syn::spanned::Spanned;
-use syn::{Error, GenericArgument, Item, ItemStruct, PathArguments, Type};
+use syn::{Error, Item, ItemStruct};
 
 pub struct FromMdItem {
     item: ItemStruct,
@@ -34,33 +34,11 @@ pub fn from_md_impl(input: FromMdItem) -> TokenStream {
         ),
         syn::Fields::Unit => Vec::new(),
     };
-    // We need to get the generic node type from the children field.
+    // We need to make sure there is a `children` field.
     let children_field = fields
         .iter()
         .find(|f| f.ident.as_ref().unwrap() == "children");
-    let generic_node_ty;
-    if let Some(children_field) = children_field {
-        match &children_field.ty {
-            Type::Path(ty) => {
-                let last = ty.path.segments.last().unwrap();
-                match &last.arguments {
-                    PathArguments::None => {
-                        abort!(last, "the `children` prop should have a generic type")
-                    }
-                    PathArguments::AngleBracketed(args) => {
-                        generic_node_ty = args
-                            .args
-                            .iter()
-                            .find(|arg| matches!(arg, GenericArgument::Type(_)))
-                    }
-                    PathArguments::Parenthesized(args) => {
-                        abort!(args, "wrong type of generics for the `children` prop")
-                    }
-                };
-            }
-            _ => abort!(children_field.ty, "invalid type for `children` prop"),
-        }
-    } else {
+    if children_field.is_none() {
         abort!(
             input.item,
             "the `children` prop is required but was not found"
@@ -81,7 +59,7 @@ pub fn from_md_impl(input: FromMdItem) -> TokenStream {
     assert_eq!(idents_str.len(), idents_ty.len());
 
     quote! {
-        impl #impl_generics ::mdsycx::FromMd<#generic_node_ty> for #struct_ident #ty_generics #where_clause {
+        impl #impl_generics ::mdsycx::FromMd for #struct_ident #ty_generics #where_clause {
             fn new_prop_default() -> Self {
                 Self {
                     #(
@@ -104,8 +82,8 @@ pub fn from_md_impl(input: FromMdItem) -> TokenStream {
                 }
             }
 
-            fn set_children(&mut self, value: ::sycamore::view::View<#generic_node_ty>) {
-                self.children = ::sycamore::component::Children::from(value);
+            fn set_children(&mut self, value: ::sycamore::web::View) {
+                self.children = ::sycamore::prelude::Children::from(move || value);
             }
         }
     }

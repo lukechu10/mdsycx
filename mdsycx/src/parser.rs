@@ -53,7 +53,7 @@ pub enum Event<'a> {
 
 /// Parse the the markdown document, including the front matter. The front matter is the metadata of
 /// the document. It should be at the top of the file and surrounded by `---` characters.
-pub fn parse<'de, T>(input: &'de str) -> Result<ParseRes<T>, ParseError>
+pub fn parse<'de, T>(input: &'de str) -> Result<ParseRes<'de, T>, ParseError>
 where
     T: Deserialize<'de>,
 {
@@ -90,7 +90,7 @@ fn parse_md(input: &str) -> BodyRes {
     BodyRes { events }
 }
 
-fn parse_html<'a>(input: &str, events: &mut Vec<Event<'a>>) {
+fn parse_html(input: &str, events: &mut Vec<Event>) {
     let mut reader = Reader::from_str(input);
 
     // Keep track of the element depth. If the depth is not 0 when parsing is finished, that means
