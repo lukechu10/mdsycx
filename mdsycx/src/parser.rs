@@ -32,7 +32,7 @@ pub struct ParseRes<'a, T = ()> {
 }
 
 /// The parsed markdown file.
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BodyRes<'a> {
     #[serde(borrow)]
     pub(crate) events: Vec<Event<'a>>,
