@@ -24,9 +24,9 @@ pub enum ParseError {
 }
 
 /// The result of parsing mdsycx.
-pub struct ParseRes<'a, T> {
+pub struct ParseRes<'a, T = ()> {
     /// The parsed MD front matter. If no front matter was present, this has a value of `None`.
-    pub front_matter: Option<T>,
+    pub front_matter: T,
     /// The parsed file. This should be passed when rendering the Markdown with Sycamore.
     pub body: BodyRes<'a>,
 }
@@ -61,7 +61,7 @@ where
     if let Some(("", rest)) = input.split_once("---") {
         // Parse front matter.
         if let Some((front_matter_str, body_str)) = rest.split_once("---") {
-            let front_matter = Some(serde_yaml::from_str(front_matter_str)?);
+            let front_matter = serde_yaml::from_str(front_matter_str)?;
 
             Ok(ParseRes {
                 front_matter,
@@ -71,8 +71,10 @@ where
             Err(ParseError::MissingFrontMatterEndDelimiter)
         }
     } else {
+        // Try to parse front matter from an empty string.
+        let front_matter = serde_yaml::from_str::<T>("")?;
         Ok(ParseRes {
-            front_matter: None,
+            front_matter,
             body: parse_md(input),
         })
     }
