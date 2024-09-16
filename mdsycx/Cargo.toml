@@ -16,7 +16,7 @@ pulldown-cmark = { version = "0.12.1", features = ["serde"] }
 quick-xml = "0.36.1"
 serde = { version = "1.0.144", features = ["derive"] }
 serde_yaml = "0.9.13"
-sycamore = "0.9.0-beta.3"
+sycamore = "0.9.0-beta.4"
 thiserror = "1.0.35"
 web-sys = "0.3.60"
 
