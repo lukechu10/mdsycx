@@ -1,7 +1,5 @@
 //! Parse MD with custom extensions.
 
-use std::borrow::Cow;
-
 use pulldown_cmark::html::push_html;
 use pulldown_cmark::Options;
 use quick_xml::events::Event as XmlEvent;
@@ -24,36 +22,35 @@ pub enum ParseError {
 }
 
 /// The result of parsing mdsycx.
-pub struct ParseRes<'a, T = ()> {
+pub struct ParseRes<T = ()> {
     /// The parsed MD front matter. If no front matter was present, this has a value of `None`.
     pub front_matter: T,
     /// The parsed file. This should be passed when rendering the Markdown with Sycamore.
-    pub body: BodyRes<'a>,
+    pub body: BodyRes,
 }
 
 /// The parsed markdown file.
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct BodyRes<'a> {
-    #[serde(borrow)]
-    pub(crate) events: Vec<Event<'a>>,
+pub struct BodyRes {
+    pub(crate) events: Vec<Event>,
 }
 
 /// Tree events, or "instructions" that can be serialized and rendered with Sycamore.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-pub enum Event<'a> {
+pub enum Event {
     /// Create a new tag.
-    Start(Cow<'a, str>),
+    Start(String),
     /// End of new tag.
     End,
     /// Add an attribute to the current tag.
-    Attr(Cow<'a, str>, Cow<'a, str>),
+    Attr(String, String),
     /// Text node.
-    Text(Cow<'a, str>),
+    Text(String),
 }
 
 /// Parse the the markdown document, including the front matter. The front matter is the metadata of
 /// the document. It should be at the top of the file and surrounded by `---` characters.
-pub fn parse<'de, T>(input: &'de str) -> Result<ParseRes<'de, T>, ParseError>
+pub fn parse<'de, T>(input: &'de str) -> Result<ParseRes<T>, ParseError>
 where
     T: Deserialize<'de>,
 {
@@ -104,12 +101,12 @@ fn parse_html(input: &str, events: &mut Vec<Event>) {
         match reader.read_event_into(&mut buf) {
             Ok(XmlEvent::Start(start)) => {
                 events.push(Event::Start(
-                    String::from_utf8(start.name().0.to_vec()).unwrap().into(),
+                    String::from_utf8(start.name().0.to_vec()).unwrap(),
                 ));
                 for attr in start.html_attributes().with_checks(false).flatten() {
                     events.push(Event::Attr(
-                        String::from_utf8(attr.key.0.to_vec()).unwrap().into(),
-                        String::from_utf8(attr.value.to_vec()).unwrap().into(),
+                        String::from_utf8(attr.key.0.to_vec()).unwrap(),
+                        String::from_utf8(attr.value.to_vec()).unwrap(),
                     ));
                 }
                 depth += 1;
@@ -127,18 +124,18 @@ fn parse_html(input: &str, events: &mut Vec<Event>) {
             }
             Ok(XmlEvent::Empty(start)) => {
                 events.push(Event::Start(
-                    String::from_utf8(start.name().0.to_vec()).unwrap().into(),
+                    String::from_utf8(start.name().0.to_vec()).unwrap(),
                 ));
                 for attr in start.html_attributes().with_checks(false).flatten() {
                     events.push(Event::Attr(
-                        String::from_utf8(attr.key.0.to_vec()).unwrap().into(),
-                        String::from_utf8(attr.value.to_vec()).unwrap().into(),
+                        String::from_utf8(attr.key.0.to_vec()).unwrap(),
+                        String::from_utf8(attr.value.to_vec()).unwrap(),
                     ));
                 }
                 events.push(Event::End);
             }
             Ok(XmlEvent::Text(text)) => {
-                events.push(Event::Text(text.unescape().unwrap().to_string().into()))
+                events.push(Event::Text(text.unescape().unwrap().to_string()))
             }
             Ok(XmlEvent::Eof) => break,
             Err(e) => {

@@ -15,19 +15,21 @@ type MdComponent = Rc<dyn Fn(MdComponentProps) -> View + 'static>;
 
 /// Convert a Sycamore component into a type-erased component. The props need to implement
 /// [`FromMd`].
-fn into_type_erased_component<F, Props>(f: F) -> impl Fn(MdComponentProps) -> View
+fn into_type_erased_component<F, Props>(
+    name: &'static str,
+    f: F,
+) -> impl Fn(MdComponentProps) -> View
 where
     F: Fn(Props) -> View,
     Props: FromMd,
 {
     move |(props_serialized, children)| {
         let mut props = Props::new_prop_default();
-        for (name, value) in props_serialized {
-            if let Err(err) = props.set_prop(&name, &value) {
-                #[cfg(target_arch = "wasm32")]
-                web_sys::console::warn_1(&format!("error setting prop {name}: {err}").into());
-                #[cfg(not(target_arch = "wasm32"))]
-                eprintln!("error setting prop {name}: {err}");
+        for (prop, value) in props_serialized {
+            if let Err(err) = props.set_prop(&prop, &value) {
+                console_warn!(
+                    "error setting prop `{prop}` with value `{value}` on `{name}`: {err}"
+                );
             }
         }
         props.set_children(children);
@@ -38,7 +40,7 @@ where
 /// A map from component names to component functions.
 #[derive(Default, Clone)]
 pub struct ComponentMap {
-    map: HashMap<String, MdComponent>,
+    map: HashMap<&'static str, MdComponent>,
 }
 
 impl ComponentMap {
@@ -54,7 +56,7 @@ impl ComponentMap {
         Props: FromMd,
     {
         self.map
-            .insert(name.to_string(), Rc::new(into_type_erased_component(f)));
+            .insert(name, Rc::new(into_type_erased_component(name, f)));
         self
     }
 }
@@ -62,7 +64,7 @@ impl ComponentMap {
 /// Props for [`MDSycX`].
 #[derive(Props)]
 pub struct MdSycXProps {
-    body: BodyRes<'static>,
+    body: BodyRes,
     #[prop(default)]
     components: ComponentMap,
 }
@@ -74,7 +76,7 @@ pub fn MDSycX(props: MdSycXProps) -> View {
     events_to_view(events, props.components)
 }
 
-fn events_to_view(events: Vec<Event<'static>>, components: ComponentMap) -> View {
+fn events_to_view(events: Vec<Event>, components: ComponentMap) -> View {
     // A stack of fragments. The bottom fragment is the view that is returned. Subsequent fragments
     // are those in nested elements.
     let mut fragments_stack: Vec<Vec<View>> = vec![Vec::new()];
@@ -87,7 +89,7 @@ fn events_to_view(events: Vec<Event<'static>>, components: ComponentMap) -> View
         match ev {
             Event::Start(tag) => {
                 // Check if a component is registered for the tag.
-                if let Some(component) = components.map.get(&tag.to_string()).cloned() {
+                if let Some(component) = components.map.get(tag.as_str()).cloned() {
                     // Render the component instead of the element.
                     //
                     // To ensure proper nesting, get all the events until the corresponding end
@@ -106,7 +108,7 @@ fn events_to_view(events: Vec<Event<'static>>, components: ComponentMap) -> View
                             Event::Start(_) => depth += 1,
                             Event::End => depth -= 1,
                             Event::Attr(name, value) => {
-                                component_attributes.push((name.to_string(), value.to_string()))
+                                component_attributes.push((name.clone(), value.clone()))
                             }
                             _ => {}
                         }
@@ -138,7 +140,7 @@ fn events_to_view(events: Vec<Event<'static>>, components: ComponentMap) -> View
             }
             Event::End => {
                 let tag = element_stack.pop().expect("events are not balanced");
-                let mut node = sycamore::web::HtmlNode::create_element(tag);
+                let mut node = sycamore::web::HtmlNode::create_element(tag.into());
                 // Add children to node.
                 let children = fragments_stack.pop().expect("events are not balanced");
                 node.append_view(children.into());
@@ -156,10 +158,10 @@ fn events_to_view(events: Vec<Event<'static>>, components: ComponentMap) -> View
                 attr_stack
                     .last_mut()
                     .expect("cannot set attributes without an element")
-                    .push((name.to_string(), value.to_string()));
+                    .push((name, value));
             }
             Event::Text(text) => {
-                let node: View = text.to_string().into();
+                let node: View = text.into();
                 fragments_stack
                     .last_mut()
                     .expect("should always have at least one fragment on stack")

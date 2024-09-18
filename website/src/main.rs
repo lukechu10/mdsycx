@@ -32,14 +32,15 @@ fn Counter(props: CounterProps) -> View {
 
 #[derive(Props, FromMd)]
 struct CodeBlockProps {
+    class: String,
     children: Children,
 }
 
 #[component]
-fn CodeBlock(props: CodeBlockProps) -> View {
-    let children = props.children.call();
+fn CodeBlock(CodeBlockProps { class, children }: CodeBlockProps) -> View {
+    let children = children.call();
     view! {
-        pre(class="codeblock") {
+        pre(class=format!("{class} codeblock")) {
             (children)
         }
     }
