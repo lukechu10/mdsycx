@@ -82,8 +82,8 @@ pub fn from_md_impl(input: FromMdItem) -> TokenStream {
                 }
             }
 
-            fn set_children(&mut self, value: ::sycamore::web::View) {
-                self.children = ::sycamore::prelude::Children::from(move || value);
+            fn set_children(&mut self, children: ::sycamore::web::Children) {
+                self.children = children;
             }
         }
     }

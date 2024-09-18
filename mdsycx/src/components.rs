@@ -1,14 +1,14 @@
 //! Sycamore bindings for rendering MD with components.
 
+use std::collections::HashMap;
 use std::rc::Rc;
-use std::{borrow::Cow, collections::HashMap};
 
 use sycamore::prelude::*;
-use sycamore::web::{ViewHtmlNode, ViewNode};
+use sycamore::web::{console_warn, ViewHtmlNode, ViewNode};
 
 use crate::{BodyRes, Event, FromMd};
 
-type MdComponentProps = (Vec<(String, String)>, View);
+type MdComponentProps = (Vec<(String, String)>, Children);
 
 /// A type-erased component that can be used from Markdown.
 type MdComponent = Rc<dyn Fn(MdComponentProps) -> View + 'static>;
@@ -36,6 +36,7 @@ where
 }
 
 /// A map from component names to component functions.
+#[derive(Default, Clone)]
 pub struct ComponentMap {
     map: HashMap<String, MdComponent>,
 }
@@ -43,9 +44,7 @@ pub struct ComponentMap {
 impl ComponentMap {
     /// Create a new empty [`ComponentMap`].
     pub fn new() -> Self {
-        Self {
-            map: Default::default(),
-        }
+        Self::default()
     }
 
     /// Adds a mapping between a component name and its actual implementation.
@@ -57,12 +56,6 @@ impl ComponentMap {
         self.map
             .insert(name.to_string(), Rc::new(into_type_erased_component(f)));
         self
-    }
-}
-
-impl Default for ComponentMap {
-    fn default() -> Self {
-        Self::new()
     }
 }
 
@@ -81,11 +74,6 @@ pub fn MDSycX(props: MdSycXProps) -> View {
     events_to_view(events, props.components)
 }
 
-enum TagType {
-    Element(Cow<'static, str>),
-    Component(MdComponent),
-}
-
 fn events_to_view(events: Vec<Event<'static>>, components: ComponentMap) -> View {
     // A stack of fragments. The bottom fragment is the view that is returned. Subsequent fragments
     // are those in nested elements.
@@ -93,49 +81,76 @@ fn events_to_view(events: Vec<Event<'static>>, components: ComponentMap) -> View
     // Attributes that should be added when end tag is reached.
     let mut attr_stack: Vec<Vec<(String, String)>> = vec![Vec::new()];
     // Elements that should be constructed when the end tag is reached.
-    let mut tag_stack = Vec::new();
-    for ev in events {
+    let mut element_stack = Vec::new();
+    let mut events = events.into_iter();
+    while let Some(ev) = events.next() {
         match ev {
             Event::Start(tag) => {
-                fragments_stack.push(Vec::new());
-                attr_stack.push(Vec::new());
                 // Check if a component is registered for the tag.
                 if let Some(component) = components.map.get(&tag.to_string()).cloned() {
                     // Render the component instead of the element.
-                    tag_stack.push(TagType::Component(component))
+                    //
+                    // To ensure proper nesting, get all the events until the corresponding end
+                    // tag. Then create a closure that recursively calls `events_to_view`.
+                    let mut children_events = Vec::new();
+                    let mut component_attributes = Vec::new();
+                    let mut depth = 1;
+                    loop {
+                        let Some(ev) = events.next() else {
+                            // If there are no more events and we are still in the loop, then the
+                            // component is not closed.
+                            console_warn!("tags are not balanced");
+                            break;
+                        };
+                        match &ev {
+                            Event::Start(_) => depth += 1,
+                            Event::End => depth -= 1,
+                            Event::Attr(name, value) => {
+                                component_attributes.push((name.to_string(), value.to_string()))
+                            }
+                            _ => {}
+                        }
+                        // If depth is 0, we have reached the end of the component.
+                        if depth == 0 {
+                            break;
+                        }
+                        // Only push the event if it is not an attribute of the current component.
+                        else if !(matches!(ev, Event::Attr(_, _)) && depth == 1) {
+                            children_events.push(ev);
+                        }
+                    }
+
+                    // Now call the component.
+                    let components = components.clone();
+                    let view = component((
+                        component_attributes,
+                        Children::new(move || events_to_view(children_events, components)),
+                    ));
+                    fragments_stack
+                        .last_mut()
+                        .expect("should always have at least one fragment on stack")
+                        .push(view);
                 } else {
-                    tag_stack.push(TagType::Element(tag));
+                    fragments_stack.push(Vec::new());
+                    attr_stack.push(Vec::new());
+                    element_stack.push(tag);
                 }
             }
             Event::End => {
-                let tag = tag_stack.pop().expect("events are not balanced");
-                match tag {
-                    TagType::Element(tag) => {
-                        let mut node = sycamore::web::HtmlNode::create_element(tag);
-                        // Add children to node.
-                        let children = fragments_stack.pop().expect("events are not balanced");
-                        node.append_view(children.into());
-                        // Add attributes to node.
-                        let attributes = attr_stack.pop().expect("events are not balanced");
-                        for (name, value) in attributes {
-                            node.set_attribute(name.into(), value.into());
-                        }
-                        fragments_stack
-                            .last_mut()
-                            .expect("should always have at least one fragment on stack")
-                            .push(node.into());
-                    }
-                    TagType::Component(component) => {
-                        // Collect attributes into serde_json::Value.
-                        let attributes = attr_stack.pop().expect("events are not balanced");
-                        let children = fragments_stack.pop().expect("events are not balanced");
-                        let node = component((attributes, children.into()));
-                        fragments_stack
-                            .last_mut()
-                            .expect("should always have at least one fragment on stack")
-                            .push(node);
-                    }
+                let tag = element_stack.pop().expect("events are not balanced");
+                let mut node = sycamore::web::HtmlNode::create_element(tag);
+                // Add children to node.
+                let children = fragments_stack.pop().expect("events are not balanced");
+                node.append_view(children.into());
+                // Add attributes to node.
+                let attributes = attr_stack.pop().expect("events are not balanced");
+                for (name, value) in attributes {
+                    node.set_attribute(name.into(), value.into());
                 }
+                fragments_stack
+                    .last_mut()
+                    .expect("should always have at least one fragment on stack")
+                    .push(node.into());
             }
             Event::Attr(name, value) => {
                 attr_stack

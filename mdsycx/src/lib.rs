@@ -49,5 +49,5 @@ pub trait FromMd: 'static {
     /// not be parsed, this returns an error.
     fn set_prop(&mut self, name: &str, value: &str) -> Result<(), SetPropError>;
     /// Set the `children` prop.
-    fn set_children(&mut self, value: View);
+    fn set_children(&mut self, value: Children);
 }
