@@ -34,16 +34,29 @@ pub fn from_md_impl(input: FromMdItem) -> TokenStream {
         ),
         syn::Fields::Unit => Vec::new(),
     };
-    // We need to make sure there is a `children` field.
+
+    // Special case the `children` field since it takes `Children` type instead of parsing from
+    // string.
     let children_field = fields
         .iter()
         .find(|f| f.ident.as_ref().unwrap() == "children");
-    if children_field.is_none() {
-        abort!(
-            input.item,
-            "the `children` prop is required but was not found"
-        );
-    }
+    let children_impl = match children_field {
+        Some(_children_field) => quote! {
+            self.children = children;
+        },
+        None => {
+            let message = format!("`{struct_ident}` does not accept children");
+            quote! {
+                ::sycamore::web::console_warn!(#message);
+            }
+        }
+    };
+    let children_init = match children_field {
+        Some(_children_field) => quote! {
+            children: ::std::default::Default::default(),
+        },
+        None => quote! {},
+    };
     // Remove the `children` prop from `fields` because it is handled specially.
     let fields = fields
         .into_iter()
@@ -65,7 +78,7 @@ pub fn from_md_impl(input: FromMdItem) -> TokenStream {
                     #(
                         #idents: ::std::default::Default::default(),
                     )*
-                    children: ::std::default::Default::default(),
+                    #children_init
                 }
             }
 
@@ -83,7 +96,7 @@ pub fn from_md_impl(input: FromMdItem) -> TokenStream {
             }
 
             fn set_children(&mut self, children: ::sycamore::web::Children) {
-                self.children = children;
+                #children_impl
             }
         }
     }

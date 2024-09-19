@@ -8,7 +8,7 @@ use sycamore::web::{console_warn, ViewHtmlNode, ViewNode};
 
 use crate::{BodyRes, Event, FromMd};
 
-type MdComponentProps = (Vec<(String, String)>, Children);
+type MdComponentProps = (Vec<(String, String)>, Option<Children>);
 
 /// A type-erased component that can be used from Markdown.
 type MdComponent = Rc<dyn Fn(MdComponentProps) -> View + 'static>;
@@ -32,7 +32,9 @@ where
                 );
             }
         }
-        props.set_children(children);
+        if let Some(children) = children {
+            props.set_children(children);
+        }
         f(props)
     }
 }
@@ -124,10 +126,14 @@ fn events_to_view(events: Vec<Event>, components: ComponentMap) -> View {
 
                     // Now call the component.
                     let components = components.clone();
-                    let view = component((
-                        component_attributes,
-                        Children::new(move || events_to_view(children_events, components)),
-                    ));
+                    let children = if !children_events.is_empty() {
+                        Some(Children::new(move || {
+                            events_to_view(children_events, components)
+                        }))
+                    } else {
+                        None
+                    };
+                    let view = component((component_attributes, children));
                     fragments_stack
                         .last_mut()
                         .expect("should always have at least one fragment on stack")

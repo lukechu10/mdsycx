@@ -13,7 +13,6 @@ extern "C" {
 #[derive(Props, FromMd)]
 struct CounterProps {
     initial: i32,
-    children: Children,
 }
 
 #[component]
