@@ -109,7 +109,7 @@ fn events_to_view(events: Vec<Event>, components: ComponentMap) -> View {
                         match &ev {
                             Event::Start(_) => depth += 1,
                             Event::End => depth -= 1,
-                            Event::Attr(name, value) => {
+                            Event::Attr(name, value) if depth == 1 => {
                                 component_attributes.push((name.clone(), value.clone()))
                             }
                             _ => {}
