@@ -22,6 +22,7 @@ pub enum ParseError {
 }
 
 /// The result of parsing mdsycx.
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ParseRes<T = ()> {
     /// The parsed MD front matter. If no front matter was present, this has a value of `None`.
     pub front_matter: T,
