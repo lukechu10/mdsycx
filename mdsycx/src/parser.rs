@@ -5,6 +5,7 @@ use pulldown_cmark::Options;
 use quick_xml::events::Event as XmlEvent;
 use quick_xml::reader::Reader;
 use serde::{Deserialize, Serialize};
+use sycamore::web::console_warn;
 use thiserror::Error;
 
 /// An error from parsing mdsycx.
@@ -117,10 +118,7 @@ fn parse_html(input: &str, events: &mut Vec<Event>) {
                     events.push(Event::End);
                     depth -= 1;
                 } else {
-                    #[cfg(target_arch = "wasm32")]
-                    web_sys::console::warn_1(&"html tags are not balanced".into());
-                    #[cfg(not(target_arch = "wasm32"))]
-                    eprintln!("html tags are not balanced");
+                    console_warn!("html tags are not balanced");
                 }
             }
             Ok(XmlEvent::Empty(start)) => {
@@ -140,10 +138,7 @@ fn parse_html(input: &str, events: &mut Vec<Event>) {
             }
             Ok(XmlEvent::Eof) => break,
             Err(e) => {
-                #[cfg(target_arch = "wasm32")]
-                web_sys::console::warn_1(&format!("html parsing error: {e}").into());
-                #[cfg(not(target_arch = "wasm32"))]
-                eprintln!("html parsing error: {e}");
+                console_warn!("html parsing error: {e}");
             }
             _ => {}
         }
@@ -152,10 +147,7 @@ fn parse_html(input: &str, events: &mut Vec<Event>) {
     }
 
     if depth > 0 {
-        #[cfg(target_arch = "wasm32")]
-        web_sys::console::warn_1(&"html tags are not balanced".into());
-        #[cfg(not(target_arch = "wasm32"))]
-        eprintln!("html tags are not balanced");
+        console_warn!("html tags are not balanced");
 
         for _ in 0..depth {
             events.push(Event::End);

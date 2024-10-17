@@ -5,3 +5,6 @@ resolver = "2"
 [profile.release]
 lto = true
 opt-level = "s"
+
+[patch.crates-io]
+sycamore = { git = "https://github.com/sycamore-rs/sycamore", rev = "1821077" }
