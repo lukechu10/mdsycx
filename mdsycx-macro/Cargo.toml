@@ -1,6 +1,6 @@
 [package]
 name = "mdsycx-macro"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 description = "markdown with Sycamore"
 categories = ["gui", "wasm"]
@@ -8,7 +8,7 @@ keywords = ["sycamore", "markdown"]
 readme = "../README.md"
 license = "MIT"
 repository = "https://github.com/lukechu10/mdsycx"
-homepage = "https://lukechu10.github.io/mdsycx/"
+homepage = "https://lukechu.dev/mdsycx/"
 
 [lib]
 proc-macro = true
