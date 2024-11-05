@@ -1,0 +1,71 @@
+html {
+  overflow-x: hidden;
+  scroll-behavior: smooth;
+}
+
+main {
+  font-family: "Open Sans", "Segoe UI", sans-serif;
+  max-width: 570px;
+  margin: auto;
+  padding: 10px;
+}
+main .links-section {
+  display: flex;
+  justify-content: space-around;
+  max-width: 300px;
+  margin: auto;
+}
+main .links-section a {
+  text-decoration: none;
+  color: black;
+}
+main .links-section a:hover {
+  text-decoration: underline;
+}
+main h1 {
+  font-weight: lighter;
+  text-align: center;
+  margin-bottom: -45px;
+  font-size: 50pt;
+}
+main h2 {
+  font-weight: lighter;
+  text-align: center;
+  margin-top: 50px;
+}
+main .counter {
+  display: flex;
+  background-color: #f8cd7c;
+  border-radius: 4px;
+  width: 100px;
+  height: 30px;
+  margin: 0 auto 50px;
+  justify-content: space-between;
+  vertical-align: middle;
+}
+main .counter span {
+  line-height: 30px;
+}
+main .counter button {
+  display: inline-block;
+  font-size: larger;
+  font-weight: lighter;
+  background-color: #d3912d;
+  border-radius: 4px;
+  border: none;
+  transition-duration: 300ms;
+  height: 30px;
+  width: 30px;
+}
+main .counter button:hover {
+  background-color: #e29c32;
+}
+main .codeblock {
+  color: white;
+  background-color: #363636;
+  border-radius: 10px;
+  padding: 1rem;
+  margin: 0.5em 0;
+  box-shadow: 0px 6px 10px #c6c6c6;
+  overflow-x: auto;
+}

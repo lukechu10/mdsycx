@@ -1,0 +1,176 @@
+<!doctype html>
+<html>
+
+<head>
+	<meta charset="utf-8" />
+	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+	<title>mdsycx</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<link rel="stylesheet" href="/mdsycx/index-a880637d595c4e87.css" integrity="sha384&#x2D;958Eu72NGKLYNSOLHKnDOYHlDehccXnBYfjAxFE2Oou3nlRwleEDNGPAay&#x2F;OH7L&#x2B;"/>
+
+	<link rel="stylesheet" href="https://necolas.github.io/normalize.css/latest/normalize.css" />
+	<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:regular,light" />
+
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"
+		integrity="sha512-7Z9J3l1+EYfeaPKcGXu3MS/7T+w19WtKQY/n+xzmw4hZhJ9tyYmcUS+4QqAlzhicE5LAfMQSF3iFTK9bQdTxXg=="
+		crossorigin="anonymous" referrerpolicy="no-referrer" data-manual></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-rust.min.js"
+		integrity="sha512-R/HpMlNfZZV6DxMhNz1dYJbBaPBVSOCqX8imo3uGUurhPDHRcXrBxkEVOjawwUwTMfOqT6t1eLYYQXIjFWCX/A=="
+		crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-toml.min.js"
+		integrity="sha512-R9JG7uVdcjWlZvEWyP3KfxtexvT1uIlKUF/dYVmZRbvJyMobK6zGCpIM2gLVqYjLSYeL/zBjOVpP7vXxVtzfCw=="
+		crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"
+		integrity="sha512-whYhDwtTmlC/NpZlCr6PSsAaLOrfjVg/iXAnC4H/dtiHawpShhT2SlIMbpIhT/IL/NrpdMm+Hq2C13+VKpHTYw=="
+		crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-markdown.min.js"
+		integrity="sha512-IHQR8J+JbQpZ1tjkHkq8Ivsgo6ovfnYbQnYzmoKCjTCQG90YVs9l+2P14DRIZ94VBrB+F86Ju4wSGOMOjfVCQQ=="
+		crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css"
+		integrity="sha512-vswe+cgvic/XBoF1OcM/TeJ2FW0OofqAVdCZiEYkd6dwGXthvkSFWOoGGJgS2CW70VK5dQM5Oh+7ne47s74VTg=="
+		crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+	
+<script type="module" nonce="Ky+Tpd8Mjx8td2B8B9sCdQ==">
+import init, * as bindings from '/mdsycx/website-1255a6e72e7cf95d.js';
+const wasm = await init('/mdsycx/website-1255a6e72e7cf95d_bg.wasm');
+
+
+window.wasmBindings = bindings;
+
+
+dispatchEvent(new CustomEvent("TrunkApplicationStarted", {detail: {wasm}}));
+
+</script>
+<link rel="modulepreload" href="/mdsycx/website-1255a6e72e7cf95d.js" crossorigin=anonymous integrity="sha384-gdnWkCJ6QbktcD+QG9A40/+9AurnxED6eyKRsmObpT/s6JrUDZ/84m7WigvbPBWu"><link rel="preload" href="/mdsycx/website-1255a6e72e7cf95d_bg.wasm" crossorigin=anonymous integrity="sha384-vCnpZ6BvHDPnQOdijFFfU2pRdGXCA7gaS6VJ96hN1EsIy5OHok96xrd3akQZFmsD" as="fetch" type="application/wasm"></head>
+
+<body>
+	<main data-hk="0.0"><div class="links-section" data-hk="0.5">
+  <a href="#about" data-hk="0.1">usage</a>
+  <a href="https://github.com/lukechu10/mdsycx" data-hk="0.2">github</a>
+  <a href="https://docs.rs/mdsycx" data-hk="0.3">docs.rs</a>
+  <a href="https://crates.io/crates/mdsycx" data-hk="0.4">crates.io</a>
+</div>
+<h1 id="mdsycx" data-hk="0.6">mdsycx</h1>
+<h2 id="markdown-with-sycamore" data-hk="0.7">markdown with Sycamore</h2>
+<div class="counter" data-hk="0.8"><button type="button" data-hk="0.9">-</button><span data-hk="0.10"><!--/-->42<!--/--></span><button type="button" data-hk="0.11">+</button></div>
+<pre class=" codeblock" data-hk="0.13"><code class="language-md" data-hk="0.12"># mdsycx
+
+## markdown with Sycamore
+
+&lt;Counter initial="42" /&gt;
+</code></pre>
+<br data-hk="0.14">
+<hr data-hk="0.15">
+<h2 id="about" id="about" data-hk="0.16">About</h2>
+<p data-hk="0.18">Plain ol’ markdown is a bit boring… What if we could spice it up with
+<a href="https://sycamore-rs.netlify.app" data-hk="0.17">Sycamore</a>?</p>
+<p data-hk="0.20">Meet <strong data-hk="0.19">mdsycx</strong>!</p>
+<h2 id="installation" data-hk="0.21">Installation</h2>
+<p data-hk="0.22">Just run the following command and you are all set to go.</p>
+<pre class=" codeblock" data-hk="0.24"><code class="language-sh" data-hk="0.23">cargo add mdsycx
+</code></pre>
+<p data-hk="0.26">Alternatively, you can manually add this line to your <code data-hk="0.25">Cargo.toml</code> file.</p>
+<pre class=" codeblock" data-hk="0.28"><code class="language-toml" data-hk="0.27">mdsycx = "0.2"
+</code></pre>
+<h2 id="usage" data-hk="0.29">Usage</h2>
+<p data-hk="0.32">Using mdsycx in your Sycamore app is as easy as pie! Use the <code data-hk="0.30">mdsycx::parse</code> function to parse your
+markdown file and use the <code data-hk="0.31">mdsycx::MDSycX</code> component to render it using Sycamore.</p>
+<pre class=" codeblock" data-hk="0.34"><code class="language-rust" data-hk="0.33">let parsed = parse::&lt;()&gt;(markdown).unwrap();
+
+view! {
+    div(class="markdown-container") {
+        MDSycX(body=parsed.body)
+    }
+}
+</code></pre>
+<h2 id="markdown-syntax" data-hk="0.35">Markdown syntax</h2>
+<p data-hk="0.39">Use all your favorite features from markdown. mdsycx uses the excellent
+<a href="https://github.com/raphlinus/pulldown-cmark" data-hk="0.37"><code data-hk="0.36">pulldown-cmark</code></a> crate as a
+<a href="https://commonmark.org/" data-hk="0.38">CommonMark</a> spec-compliant parser.</p>
+<h2 id="using-components-in-your-markdown" data-hk="0.40">Using components in your markdown</h2>
+<p data-hk="0.41">As advertised, it is possible to use Sycamore components directly in your markdown file.</p>
+<p data-hk="0.43">To do so, you need to make sure the props implement the <code data-hk="0.42">FromMd</code> trait. Luckily, this can be derived
+automatically using the derive macro.</p>
+<pre class=" codeblock" data-hk="0.45"><code class="language-rust" data-hk="0.44">#[derive(Props, FromMd)]
+pub struct MyProps {
+    /// A prop that can be set from markdown.
+    special_number: i32,
+    /// The `children` prop is always required.
+    children: Children,
+}
+</code></pre>
+<p data-hk="0.46">Next, create a component with props of this type. Nothing special is going on here, just your
+regular Sycamore component.</p>
+<pre class=" codeblock" data-hk="0.48"><code class="language-rust" data-hk="0.47">#[component]
+fn MyComponent(props: MyProps) -&gt; View {
+    let children = props.children.call();
+    view! {
+        div {
+            p { "Your special number is " (props.special_number) "!" }
+            p { "Everything else:" }
+            (children)
+        }
+    }
+}
+</code></pre>
+<p data-hk="0.51">Last step is to provide this component to the <code data-hk="0.49">MDSycX</code> component. To do so, you need to create a
+<code data-hk="0.50">ComponentMap</code>. Basically, this tells mdsycx which component to use when it sees a component in
+markdown.</p>
+<pre class=" codeblock" data-hk="0.53"><code class="language-rust" data-hk="0.52">let components = ComponentMap::new()
+    .with("MyComponent", MyComponent)
+    .with(/* as many components as you like */);
+
+view! {
+    div(class="markdown-container") {
+        MDSycX(body=parsed.body, components=components)
+    }
+}
+</code></pre>
+<p data-hk="0.54">All that’s left is to use your fancy new component!</p>
+<pre class=" codeblock" data-hk="0.56"><code class="language-md" data-hk="0.55">&lt;MyComponent special_number="123"&gt;
+    Hello from inside!
+&lt;/MyComponent&gt;
+</code></pre>
+<p data-hk="0.58">In fact, you can even replace built-in HTML elements such as <code data-hk="0.57">&lt;a&gt;</code> with your custom components! How
+cool is that?</p>
+<pre class=" codeblock" data-hk="0.60"><code class="language-rust" data-hk="0.59">let components = ComponentMap::new()
+    .with("a", SpecialLink);
+</code></pre>
+<p data-hk="0.61">Note that all props are optional and will be set to their default value if they are missing in
+markdown.</p>
+<h2 id="front-matter" data-hk="0.62">Front matter</h2>
+<p data-hk="0.65">Your markdown file can contain a special section called the front matter. This is a place where you
+can specify <em data-hk="0.63">metadata</em> about your markdown file (such as the time it was written, or the author,
+etc…). The front matter should be surrounded by “<code data-hk="0.64">---</code>” characters at the top of your file and the
+data should be in YAML format.</p>
+<p data-hk="0.69">You might have noticed that the <code data-hk="0.66">mdsycx::parse</code> function is actually generic. The generic parameter
+is the type of the front matter of the document. To access the data in the front-matter, you can use
+the <code data-hk="0.67">.front_matter</code> field on the struct returned from <code data-hk="0.68">mdsycx::parse</code>.</p>
+<pre class=" codeblock" data-hk="0.71"><code class="language-md" data-hk="0.70">---
+title: Writing markdown with mdsycx
+author: Me
+---
+
+# Writing markdown with mdsycx
+
+Yada yada...
+</code></pre>
+<h2 id="server-side-rendering--ssr" data-hk="0.72">Server Side Rendering (SSR)</h2>
+<p data-hk="0.73">Sycamore’s Server Side Rendering support should work out of the box! Just make sure you are
+rendering the same thing on both the server and the client!</p>
+<pre class=" codeblock" data-hk="0.75"><code class="language-rust" data-hk="0.74">let string = sycamore::render_to_string(App);
+</code></pre>
+<h2 id="roadmap" data-hk="0.76">Roadmap</h2>
+<p data-hk="0.77">Many features are not yet implemented. Here are a few:</p>
+<ul data-hk="0.83">
+<li data-hk="0.79">Built-in syntax highlighting. Right now, we are using <a href="https://prismjs.com/" data-hk="0.78">Prism</a>.</li>
+<li data-hk="0.80">Combining and composing markdown files.</li>
+<li data-hk="0.81">Easily import your markdown files to Rust.</li>
+<li data-hk="0.82">And more! If you feel like we left out something important, please feel free to send us a PR!</li>
+</ul>
+</main>
+</body>
+
+</html>
