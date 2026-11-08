@@ -12,12 +12,12 @@ homepage = "https://lukechu.dev/mdsycx/"
 
 [dependencies]
 mdsycx-macro = { path = "../mdsycx-macro", version = "0.2.0" }
-pulldown-cmark = { version = "0.12.1", features = ["serde"] }
+pulldown-cmark = { version = "0.13.6", features = ["serde"] }
 quick-xml = "0.37.0"
 serde = { version = "1.0.214", features = ["derive"] }
 serde_yaml = "0.9.13"
 sycamore = "0.9.0"
-thiserror = "1.0.67"
+thiserror = "2.0.21"
 web-sys = "0.3.72"
 
 [dev-dependencies]
