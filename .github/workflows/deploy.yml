@@ -1,20 +1,34 @@
-name: Deploy to Github Pages
+name: Deploy to GitHub Pages
 
 on:
   push:
     branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
 
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: read
     steps:
-      - uses: actions/checkout@v2
+      - name: Check out repository
+        uses: actions/checkout@v4
 
-      - name: Setup Rust
-        uses: actions-rs/toolchain@v1
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
         with:
-          toolchain: stable
-          target: wasm32-unknown-unknown
+          targets: wasm32-unknown-unknown
+
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@v2
 
       - name: Install trunk
         run: >
@@ -22,27 +36,31 @@ jobs:
           https://github.com/thedodd/trunk/releases/download/v0.21.2/trunk-x86_64-unknown-linux-gnu.tar.gz
           | tar -xzf- && sudo mv trunk /usr/bin/
 
-      - name: Cargo cache
-        uses: actions/cache@v2
-        with:
-          path: |
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            target/
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
 
-      - name: Build
-        run: cd website && trunk build --release --public-url /mdsycx/
+      - name: Build website
+        run: trunk build --release --public-url /mdsycx/
+        working-directory: website
 
       - name: Create .nojekyll file
         run: touch website/dist/.nojekyll
 
-      - name: Publish to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3.7.0
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_branch: gh_pages
-          force_orphan: true
-          publish_dir: website/dist/
-          enable_jekyll: false
+          path: website/dist
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    permissions:
+      pages: write
+      id-token: write
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
