@@ -1,5 +1,4 @@
 use proc_macro2::TokenStream;
-use proc_macro_error2::abort;
 use quote::quote;
 use syn::parse::{Parse, ParseStream};
 use syn::spanned::Spanned;
@@ -22,16 +21,18 @@ impl Parse for FromMdItem {
     }
 }
 
-pub fn from_md_impl(input: FromMdItem) -> TokenStream {
+pub fn from_md_impl(input: FromMdItem) -> syn::Result<TokenStream> {
     let struct_ident = &input.item.ident;
     let (impl_generics, ty_generics, where_clause) = input.item.generics.split_for_impl();
 
     let fields = match &input.item.fields {
         syn::Fields::Named(fields) => fields.named.iter().collect(),
-        syn::Fields::Unnamed(_) => abort!(
-            input.item,
-            "the `FromMd` derive macro cannot be applied to tuple structs"
-        ),
+        syn::Fields::Unnamed(_) => {
+            return Err(syn::Error::new(
+                input.item.span(),
+                "the `FromMd` derive macro cannot be applied to tuple structs",
+            ))
+        }
         syn::Fields::Unit => Vec::new(),
     };
 
@@ -71,7 +72,7 @@ pub fn from_md_impl(input: FromMdItem) -> TokenStream {
     let idents_ty = fields.iter().map(|f| &f.ty).collect::<Vec<_>>();
     assert_eq!(idents_str.len(), idents_ty.len());
 
-    quote! {
+    Ok(quote! {
         impl #impl_generics ::mdsycx::FromMd for #struct_ident #ty_generics #where_clause {
             fn new_prop_default() -> Self {
                 Self {
@@ -99,5 +100,5 @@ pub fn from_md_impl(input: FromMdItem) -> TokenStream {
                 #children_impl
             }
         }
-    }
+    })
 }
