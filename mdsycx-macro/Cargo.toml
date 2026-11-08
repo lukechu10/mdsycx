@@ -1,6 +1,6 @@
 [package]
 name = "mdsycx-macro"
-version = "0.2.0"
+version = "0.3.0"
 edition = "2021"
 description = "markdown with Sycamore"
 categories = ["gui", "wasm"]

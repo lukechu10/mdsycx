@@ -1,6 +1,6 @@
 [package]
 name = "mdsycx"
-version = "0.2.0"
+version = "0.3.0"
 edition = "2021"
 description = "markdown with Sycamore"
 categories = ["gui", "wasm"]
@@ -11,7 +11,7 @@ repository = "https://github.com/lukechu10/mdsycx"
 homepage = "https://lukechu.dev/mdsycx/"
 
 [dependencies]
-mdsycx-macro = { path = "../mdsycx-macro", version = "0.2.0" }
+mdsycx-macro = { path = "../mdsycx-macro", version = "0.3.0" }
 pulldown-cmark = { version = "0.13.6", features = ["serde"] }
 quick-xml = "0.42.0"
 serde = { version = "1.0.214", features = ["derive"] }
