@@ -19,9 +19,9 @@ pub enum ParseError {
     /// found.
     #[error("front matter is missing end delimiter")]
     MissingFrontMatterEndDelimiter,
-    /// Could not deserialize the front matter into the type. Deserialization uses [`serde_yaml`].
+    /// Could not deserialize the front matter into the type. Deserialization uses [`yaml_serde`].
     #[error("could not parse yaml")]
-    DeserializeError(#[from] serde_yaml::Error),
+    DeserializeError(#[from] yaml_serde::Error),
 }
 
 /// The result of parsing mdsycx.
@@ -76,7 +76,7 @@ where
     if let Some(("", rest)) = input.split_once("---") {
         // Parse front matter.
         if let Some((front_matter_str, body_str)) = rest.split_once("---") {
-            let front_matter = serde_yaml::from_str(front_matter_str)?;
+            let front_matter = yaml_serde::from_str(front_matter_str)?;
 
             let (headings, body) = parse_md(body_str);
             Ok(ParseRes {
@@ -89,7 +89,7 @@ where
         }
     } else {
         // Try to parse front matter from an empty string.
-        let front_matter = serde_yaml::from_str::<T>("")?;
+        let front_matter = yaml_serde::from_str::<T>("")?;
         let (headings, body) = parse_md(input);
         Ok(ParseRes {
             front_matter,
