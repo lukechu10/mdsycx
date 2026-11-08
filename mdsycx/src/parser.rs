@@ -150,7 +150,7 @@ fn parse_html(input: &str, headings: &mut Vec<OutlineHeading>, events: &mut Vec<
     loop {
         match reader.read_event_into(&mut buf) {
             Ok(XmlEvent::Start(start)) => {
-                let tag = start.name().0;
+                let tag = start.name().0.as_bytes();
                 // Check if this is the start of a heading. If so, initialize `heading_title`.
                 if tag.len() == 2 && tag[0] == b'h' && tag[1].is_ascii_digit() {
                     heading_title = Some(String::new());
@@ -160,14 +160,12 @@ fn parse_html(input: &str, headings: &mut Vec<OutlineHeading>, events: &mut Vec<
 
                 events.push(Event::Start(tag));
                 for attr in start.html_attributes().with_checks(false).flatten() {
-                    events.push(Event::Attr(
-                        String::from_utf8(attr.key.0.to_vec()).unwrap(),
-                        String::from_utf8(attr.value.to_vec()).unwrap(),
-                    ));
+                    events.push(Event::Attr(attr.key.0.to_string(), attr.value.to_string()));
                 }
                 depth += 1;
             }
             Ok(XmlEvent::End(tag)) => {
+                let tag = tag.as_bytes();
                 // Check if this is the end of a heading. If so, set `heading_title` back to `None`
                 // and slug the title.
                 if tag.len() == 2 && tag[0] == b'h' && tag[1].is_ascii_digit() {
@@ -190,18 +188,15 @@ fn parse_html(input: &str, headings: &mut Vec<OutlineHeading>, events: &mut Vec<
                 }
             }
             Ok(XmlEvent::Empty(start)) => {
-                let tag = String::from_utf8(start.name().0.to_vec()).unwrap();
+                let tag = start.name().0.to_string();
                 events.push(Event::Start(tag));
                 for attr in start.html_attributes().with_checks(false).flatten() {
-                    events.push(Event::Attr(
-                        String::from_utf8(attr.key.0.to_vec()).unwrap(),
-                        String::from_utf8(attr.value.to_vec()).unwrap(),
-                    ));
+                    events.push(Event::Attr(attr.key.0.to_string(), attr.value.to_string()));
                 }
                 events.push(Event::End);
             }
             Ok(XmlEvent::Text(text)) => {
-                let text = text.unescape().unwrap().to_string();
+                let text = quick_xml::escape::unescape(&text).unwrap().to_string();
                 if let Some(title) = heading_title.as_mut() {
                     title.push_str(&text);
                 }
